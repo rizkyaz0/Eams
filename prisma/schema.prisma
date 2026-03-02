@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Division {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  assets      Asset[]
+  users       User[]
+}
+
+model Location {
+  id          String   @id @default(cuid())
+  name        String
+  address     String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  assets      Asset[]
+}
+
+model Category {
+  id     String  @id @default(cuid())
+  name   String  @unique
+  assets Asset[]
+}
+
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  password      String
+  fullName      String
+  nip           String?    @unique
+  role          UserRole   @default(EMPLOYEE)
+  divisionId    String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  assetsHeld    Asset[]    @relation("CurrentHolder")
+  auditLogs     AuditLog[]
+  approvedBasts Bast[]     @relation("BastApprover")
+  createdBasts  Bast[]     @relation("BastCreator")
+  division      Division?  @relation(fields: [divisionId], references: [id])
+}
+
+model Asset {
+  id            String         @id @default(cuid())
+  name          String
+  tagNumber     String         @unique
+  serialNumber  String?
+  specification String?
+  description   String?
+  purchaseDate  DateTime
+  purchasePrice Decimal        @db.Decimal(15, 2)
+  imagePath     String?
+  status        AssetStatus    @default(AVAILABLE)
+  condition     AssetCondition @default(GOOD)
+  categoryId    String
+  locationId    String?
+  holderId      String?
+  divisionId    String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  category      Category       @relation(fields: [categoryId], references: [id])
+  division      Division?      @relation(fields: [divisionId], references: [id])
+  holder        User?          @relation("CurrentHolder", fields: [holderId], references: [id])
+  location      Location?      @relation(fields: [locationId], references: [id])
+  bastDetails   BastDetail[]
+  maintenances  Maintenance[]
+
+  @@index([tagNumber])
+  @@index([status])
+  @@index([holderId])
+}
+
+model Bast {
+  id                 String       @id @default(cuid())
+  bastNumber         String       @unique
+  type               BastType
+  description        String?
+  fileUrl            String?
+  status             String       @default("DRAFT")
+  effectiveDate      DateTime     @default(now())
+  recipientName      String?
+  recipientPosition  String?
+  approverName       String?
+  loanStartDate      DateTime?
+  loanEndDate        DateTime?
+  approvedAt         DateTime?
+  creatorId          String
+  approverId         String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  approver           User?        @relation("BastApprover", fields: [approverId], references: [id])
+  creator            User         @relation("BastCreator", fields: [creatorId], references: [id])
+  details            BastDetail[]
+}
+
+model BastDetail {
+  id               String          @id @default(cuid())
+  bastId           String
+  assetId          String
+  conditionBefore  AssetCondition?
+  conditionAfter   AssetCondition
+  targetLocationId String?
+  targetHolderId   String?
+  description      String?
+  asset            Asset           @relation(fields: [assetId], references: [id])
+  bast             Bast            @relation(fields: [bastId], references: [id], onDelete: Cascade)
+
+  @@unique([bastId, assetId])
+}
+
+model Maintenance {
+  id          String    @id @default(cuid())
+  assetId     String
+  description String
+  cost        Decimal?  @db.Decimal(15, 2)
+  vendorName  String?
+  startDate   DateTime
+  endDate     DateTime?
+  status      String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  asset       Asset     @relation(fields: [assetId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  entity    String
+  entityId  String
+  userId    String
+  oldValues Json?
+  newValues Json?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([entity, entityId])
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN_INSTANSI
+  STAFF_ASSET
+  TEKNISI
+  EMPLOYEE
+}
+
+enum AssetStatus {
+  AVAILABLE
+  IN_USE
+  IN_MAINTENANCE
+  MISSING
+  DISPOSED
+}
+
+enum AssetCondition {
+  GOOD
+  MINOR_DAMAGE
+  MAJOR_DAMAGE
+  TOTAL_LOSS
+}
+
+enum BastType {
+  PROCUREMENT
+  ASSIGNMENT
+  RETURN
+  MUTATION
+  MAINTENANCE_OUT
+  MAINTENANCE_IN
+  DISPOSAL
+  STOCK_OPNAME
+}
