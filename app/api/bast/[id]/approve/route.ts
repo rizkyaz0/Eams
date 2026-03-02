@@ -28,14 +28,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         data: {
           status: "APPROVED",
           approvedAt: new Date(),
-          approverId: user.id,
-          approverName: user.fullName,
+          approverId: user.id || null,
+          approverName: user.fullName || null,
         },
       });
 
       // 3. Update Assets based on Type
       for (const detail of bast.details) {
-        let newStatus = AssetStatus.AVAILABLE;
+        let newStatus: AssetStatus = AssetStatus.AVAILABLE;
         const updateData: any = {};
 
         if (bast.type === BastType.ASSIGNMENT) {
