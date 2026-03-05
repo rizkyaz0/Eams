@@ -44,7 +44,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           effectiveDate: new Date(),
           recipientName: asset.holder?.fullName || "Previous Holder",
           recipientPosition: "Employee",
-          creatorId: user.id,
+          creatorId: user.id as string,
           details: {
             create: [
               {
