@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 // @ts-ignore
-import { Html5QrcodeScanner } from "html5-qrcode";
+import { Html5QrcodeScanner, Html5QrcodeScanType } from "html5-qrcode";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 interface QrScannerDialogProps {
   open: boolean;
@@ -14,97 +15,115 @@ interface QrScannerDialogProps {
 
 export function QrScannerDialog({ open, onOpenChange }: QrScannerDialogProps) {
   const router = useRouter();
-  const [scanner, setScanner] = useState<any>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const scannerRef = useRef<any>(null);
 
   useEffect(() => {
-    if (open) {
-      // Initialize scanner with a slight delay to ensure DOM is ready
-      const timeout = setTimeout(() => {
-        try {
-          const qrScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false);
+    if (open && !isProcessing) {
+      // Small delay to ensure the DOM element "reader" is fully rendered
+      const timeoutId = setTimeout(() => {
+        if (!scannerRef.current) {
+          try {
+            const scanner = new Html5QrcodeScanner(
+              "reader",
+              {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+              },
+              false,
+            );
 
-          qrScanner.render(onScanSuccess, onScanFailure);
-          setScanner(qrScanner);
-        } catch (e) {
-          console.error("Failed to init scanner", e);
+            scanner.render(onScanSuccess, onScanFailure);
+            scannerRef.current = scanner;
+          } catch (err) {
+            console.error("Failed to initialize scanner", err);
+          }
         }
       }, 100);
 
       return () => {
-        clearTimeout(timeout);
-        if (scanner) {
-          try {
-            scanner.clear().catch((err: any) => console.error("Failed to clear scanner", err));
-          } catch (e) {
-            // ignore
-          }
+        clearTimeout(timeoutId);
+        if (scannerRef.current) {
+          scannerRef.current.clear().catch(console.error);
+          scannerRef.current = null;
         }
       };
     } else {
-      if (scanner) {
-        try {
-          scanner.clear().catch((err: any) => console.error("Failed to clear scanner", err));
-          setScanner(null);
-        } catch (e) {
-          // ignore
-        }
+      // Cleanup when dialog closes
+      if (scannerRef.current) {
+        scannerRef.current.clear().catch(console.error);
+        scannerRef.current = null;
       }
     }
-  }, [open]);
+  }, [open, isProcessing]);
 
-  const onScanSuccess = (decodedText: string, decodedResult: any) => {
-    // Handle the scanned code
-    console.log(`Code matched = ${decodedText}`, decodedResult);
+  const onScanSuccess = (decodedText: string) => {
+    if (isProcessing) return; // Prevent multiple rapid scans
 
+    setIsProcessing(true);
     let assetId = decodedText;
 
-    try {
-      if (decodedText.includes("/assets/")) {
-        const parts = decodedText.split("/assets/");
-        if (parts.length > 1) {
-          assetId = parts[1];
-        }
+    // Check if the QR code string is a URL containing /assets/
+    if (decodedText.includes("/assets/")) {
+      const parts = decodedText.split("/assets/");
+      if (parts.length > 1) {
+        assetId = parts[1].split("/")[0]; // Extract ID taking care of trailing slashes or queries
+      }
+    }
+
+    if (assetId && assetId.trim() !== "") {
+      if (scannerRef.current) {
+        scannerRef.current.clear().catch(console.error);
+        scannerRef.current = null;
       }
 
-      onOpenChange(false); // Close dialog
-      router.push(`/assets/${assetId}`);
-      toast.success("Asset found via QR");
-    } catch (e) {
-      toast.error("Invalid QR Code");
+      toast.success("Asset detected. Redirecting...");
+      onOpenChange(false);
+
+      // Delay navigation slightly to allow UI to update (dialog closes, toast shows)
+      setTimeout(() => {
+        router.push(`/assets/${assetId}`);
+        setIsProcessing(false);
+      }, 500);
+    } else {
+      toast.error("Invalid QR format. Could not extract Asset ID.");
+      setIsProcessing(false);
     }
   };
 
   const onScanFailure = (error: any) => {
-    // handle scan failure, usually better to ignore and keep scanning.
+    // We intentionally ignore scanning failures (like when the camera is pointing at nowhere)
+    // to avoid flooding the console/UI. `html5-qrcode` fires this many times per second.
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(val) => {
+        if (!isProcessing) onOpenChange(val);
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Scan Asset QR Code</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col items-center justify-center p-4">
-          <div className="relative w-full aspect-square max-w-[300px] overflow-hidden rounded-xl border-2 border-primary/20 bg-black">
-            <div id="reader" className="w-full h-full scale-110"></div>
-
-            {/* Visual Scan Guide Overlay */}
-            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-              <div className="size-48 border-2 border-primary rounded-lg relative">
-                {/* Corner Accents */}
-                <div className="absolute -top-1 -left-1 size-4 border-t-4 border-l-4 border-primary rounded-tl-sm"></div>
-                <div className="absolute -top-1 -right-1 size-4 border-t-4 border-r-4 border-primary rounded-tr-sm"></div>
-                <div className="absolute -bottom-1 -left-1 size-4 border-b-4 border-l-4 border-primary rounded-bl-sm"></div>
-                <div className="absolute -bottom-1 -right-1 size-4 border-b-4 border-r-4 border-primary rounded-br-sm"></div>
-
-                {/* Scanning Line Animation */}
-                <div className="absolute top-0 left-0 w-full h-0.5 bg-primary/50 shadow-[0_0_8px_rgba(var(--primary),0.8)] animate-scan-line"></div>
-              </div>
+          {isProcessing ? (
+            <div className="flex flex-col items-center justify-center space-y-4 py-12">
+              <Loader2 className="size-10 text-primary animate-spin" />
+              <p className="font-medium animate-pulse">Processing code...</p>
             </div>
-          </div>
+          ) : (
+            <div className="relative w-full aspect-square max-w-[300px] overflow-hidden rounded-xl border-2 border-primary/20 bg-black">
+              {/* html5-qrcode mounts inside this div */}
+              <div id="reader" className="w-full h-full [&_video]:object-cover" />
+            </div>
+          )}
+
           <div className="mt-6 text-center space-y-1">
-            <p className="font-medium">Align QR Code within frame</p>
-            <p className="text-sm text-muted-foreground">Scanning will start automatically</p>
+            <p className="font-medium">Align QR Code within the frame.</p>
+            <p className="text-sm text-muted-foreground">Make sure you allow camera permissions in your browser.</p>
           </div>
         </div>
       </DialogContent>

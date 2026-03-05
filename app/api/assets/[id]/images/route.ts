@@ -12,8 +12,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   try {
     const { id } = await params;
+
+    // Parse the multipart form data
     const formData = await request.formData();
-    const file = formData.get("file") as File;
+    const file = formData.get("file") as File | null;
 
     if (!file) {
       return errorResponse("No file uploaded", 400);
@@ -22,19 +24,23 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const asset = await db.asset.findUnique({ where: { id } });
     if (!asset) return notFoundResponse("Asset not found");
 
+    // Convert file to buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
+    // Save directly to public/uploads/assets directory
     const uploadDir = join(process.cwd(), "public", "uploads", "assets");
     await mkdir(uploadDir, { recursive: true });
 
-    const fileName = `${id}-${Date.now()}-${file.name.replace(/\s+/g, "-")}`;
+    // Clean up filename and add timestamp
+    const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+    const fileName = `${id}-${Date.now()}-${cleanFileName}`;
     const path = join(uploadDir, fileName);
 
     await writeFile(path, buffer);
     const publicPath = `/uploads/assets/${fileName}`;
 
-    // Update asset image path
+    // Update asset image path in the database
     await db.asset.update({
       where: { id },
       data: { imagePath: publicPath },

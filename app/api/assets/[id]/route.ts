@@ -156,12 +156,16 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return notFoundResponse("Asset not found");
     }
 
-    // Delete asset
-    await db.asset.delete({
+    // Soft-Delete asset (Mark as DISPOSED)
+    await db.asset.update({
       where: { id },
+      data: {
+        status: "DISPOSED",
+        holderId: null,
+      },
     });
 
-    return successResponse(null, "Asset deleted successfully");
+    return successResponse(null, "Asset marked as disposed successfully");
   } catch (error) {
     console.error("Delete asset error:", error);
     return errorResponse("Failed to delete asset", 500);

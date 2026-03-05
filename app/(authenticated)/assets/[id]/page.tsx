@@ -24,6 +24,8 @@ export default function AssetDetailPage() {
   const [locations, setLocations] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
 
+  const [returning, setReturning] = useState(false);
+
   useEffect(() => {
     fetchAsset();
     fetchCategories();
@@ -91,6 +93,26 @@ export default function AssetDetailPage() {
     }
   };
 
+  const handleReturnAction = async () => {
+    setReturning(true);
+    try {
+      const response = await fetch(`/api/assets/${asset.id}/return`, {
+        method: "POST",
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast.success("BAST Pengembalian berhasil dibuat. Mengalihkan ke halaman BAST...");
+        router.push(`/bast/${data.data.id}`);
+      } else {
+        toast.error(data.error || "Gagal membuat BAST Pengembalian");
+      }
+    } catch (error) {
+      toast.error("Terjadi kesalahan pada server");
+    } finally {
+      setReturning(false);
+    }
+  };
+
   const statusConfig: any = {
     AVAILABLE: { label: "Available", variant: "default", color: "bg-green-500" },
     IN_USE: { label: "In Use", variant: "secondary", color: "bg-blue-500" },
@@ -136,6 +158,12 @@ export default function AssetDetailPage() {
             </div>
           </div>
           <div className="flex gap-2">
+            {asset.status === "IN_USE" && (
+              <Button onClick={handleReturnAction} disabled={returning} className="bg-green-600 hover:bg-green-700">
+                {returning ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+                Proses Pengembalian
+              </Button>
+            )}
             <Button variant="outline" onClick={() => setEditOpen(true)}>
               <Edit className="mr-2 size-4" />
               Edit
