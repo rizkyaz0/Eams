@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Edit, Trash2, QrCode, Printer, Image as ImageIcon, Camera, Loader2 } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 import { EditAssetDialog } from "@/components/edit-asset-dialog";
 import { DeleteAssetDialog } from "@/components/delete-asset-dialog";
 import { toast } from "sonner";
@@ -23,6 +24,8 @@ export default function AssetDetailPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [locations, setLocations] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [financeData, setFinanceData] = useState<any>(null);
+  const [financeLoading, setFinanceLoading] = useState(true);
 
   const [returning, setReturning] = useState(false);
 
@@ -30,6 +33,7 @@ export default function AssetDetailPage() {
     fetchAsset();
     fetchCategories();
     fetchLocations();
+    fetchFinanceData();
   }, [params.id]);
 
   const fetchAsset = async () => {
@@ -63,6 +67,18 @@ export default function AssetDetailPage() {
       if (data.success) setLocations(data.data);
     } catch (error) {
       console.error("Failed to fetch locations:", error);
+    }
+  };
+
+  const fetchFinanceData = async () => {
+    try {
+      const response = await fetch(`/api/assets/${params.id}/finance`);
+      const data = await response.json();
+      if (data.success) setFinanceData(data.data);
+    } catch (error) {
+      console.error("Failed to fetch finance:", error);
+    } finally {
+      setFinanceLoading(false);
     }
   };
 
@@ -361,6 +377,68 @@ export default function AssetDetailPage() {
               <p className="text-sm font-medium text-muted-foreground">Asset ID</p>
               <p className="mt-1 text-sm font-mono">{asset.id}</p>
             </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 mt-4 p-4 md:px-6 md:pb-6 md:pt-0 print:hidden border-t">
+        <h2 className="text-xl font-bold tracking-tight mb-2">Analisis Finansial Aset (Depresiasi)</h2>
+        <Card className="col-span-full">
+          <CardContent className="pt-6">
+            {financeLoading ? (
+              <Skeleton className="h-[300px] w-full" />
+            ) : financeData?.isCalculable ? (
+              <div className="flex flex-col lg:flex-row gap-8">
+                <div className="flex-1">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-muted/40 rounded-lg">
+                      <p className="text-sm font-medium text-muted-foreground">Nilai Perolehan (Purchase)</p>
+                      <p className="mt-1 text-2xl font-bold">Rp {financeData.metrics.purchasePrice.toLocaleString("id-ID")}</p>
+                    </div>
+                    <div className="p-4 bg-primary/5 rounded-lg border border-primary/10">
+                      <p className="text-sm font-medium text-primary/80">Nilai Buku Saat Ini</p>
+                      <p className="mt-1 text-2xl font-bold text-primary">Rp {financeData.metrics.currentBookValue.toLocaleString("id-ID")}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Nilai Sisa (Salvage)</p>
+                      <p className="mt-1 text-lg font-semibold">Rp {financeData.metrics.salvageValue.toLocaleString("id-ID")}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Akumulasi Penyusutan</p>
+                      <p className="mt-1 text-red-500 font-medium">- Rp {financeData.metrics.accumulatedDepreciation.toLocaleString("id-ID")}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Penyusutan Bulanan</p>
+                      <p className="mt-1">Rp {financeData.metrics.monthlyDepreciation.toLocaleString("id-ID")} / bln</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Umur Terpakai</p>
+                      <p className="mt-1">
+                        {financeData.metrics.monthsElapsed} / {financeData.metrics.usefulLifeMonths} bulan
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex-1 min-h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={financeData.chartData} margin={{ top: 5, right: 20, bottom: 5, left: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="label" className="text-xs" />
+                      <YAxis tickFormatter={(value) => `Rp ${(value / 1000000).toFixed(0)}M`} width={80} className="text-xs" />
+                      <RechartsTooltip formatter={(value: any) => [`Rp ${value.toLocaleString("id-ID")}`, "Book Value"]} labelClassName="text-black font-semibold" />
+                      <Line type="monotone" dataKey="bookValue" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center p-8 text-center bg-muted/20 rounded-lg">
+                <p className="text-muted-foreground">Data finansial tidak lengkap untuk menghitung kurva depresiasi nilai aset.</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Harap edit aset ini dan lengkapi kolom <b>Useful Life (Masa Pakai)</b> agar perhitungan Straight-Line Depreciation berjalan.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

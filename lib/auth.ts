@@ -5,7 +5,10 @@ import { cookies } from "next/headers";
 import { UserRole } from "@prisma/client";
 
 // Secret key untuk JWT
-const SECRET_KEY = new TextEncoder().encode(process.env.JWT_SECRET || "your-secret-key-change-this-in-production");
+if (!process.env.JWT_SECRET) {
+  throw new Error("FATAL: JWT_SECRET environment variable must be set. Application cannot start securely.");
+}
+const SECRET_KEY = new TextEncoder().encode(process.env.JWT_SECRET);
 
 const TOKEN_NAME = "auth-token";
 

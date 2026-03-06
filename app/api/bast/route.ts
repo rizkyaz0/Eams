@@ -4,6 +4,7 @@ import db from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { successResponse, errorResponse, unauthorizedResponse } from "@/lib/api-response";
 import { BastType } from "@prisma/client";
+import { sendEmail, bastApprovalEmailHtml } from "@/lib/email";
 
 /**
  * GET /api/bast - Get all BAST with filters and pagination
@@ -101,15 +102,16 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { type, recipientName, recipientPosition, notes, items } = body;
+    const { type, recipientName, recipientPosition, description, notes, items } = body;
+    const bastDescription = description || notes || null; // Support both field names
 
     // Validation
     if (!type || !recipientName) {
-      return errorResponse("Type and recipient name are required", 400);
+      return errorResponse("Type dan nama penerima wajib diisi", 400);
     }
 
     if (!items || items.length === 0) {
-      return errorResponse("At least one asset is required", 400);
+      return errorResponse("Minimal satu aset harus dipilih", 400);
     }
 
     // Auto-generate BAST number
@@ -136,12 +138,12 @@ export async function POST(request: NextRequest) {
         data: {
           bastNumber,
           type: type as BastType,
-          description: notes || null,
+          description: bastDescription,
           recipientName,
           recipientPosition: recipientPosition || null,
           effectiveDate: new Date(),
           creatorId: user.userId,
-          status: "PENDING", // Changed from DRAFT to PENDING
+          status: "PENDING",
         },
       });
 
@@ -152,11 +154,12 @@ export async function POST(request: NextRequest) {
             data: {
               bastId: newBast.id,
               assetId: item.assetId,
-              conditionBefore: "GOOD", // Default value
-              conditionAfter: "GOOD", // Default value
-              targetLocationId: null,
-              targetHolderId: null,
-              description: null,
+              conditionBefore: item.conditionBefore || "GOOD",
+              conditionAfter: item.conditionAfter || "GOOD",
+              // ✅ FIX: Pass through targeting fields from request body (was hardcoded null)
+              targetLocationId: item.targetLocationId || null,
+              targetHolderId: item.targetHolderId || null,
+              description: item.description || null,
             },
           }),
         ),
@@ -191,7 +194,38 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return successResponse(completeBast, "BAST created successfully", 201);
+    // ✅ EMAIL NOTIFICATION: fire-and-forget, does not block response
+    if (completeBast) {
+      const admins = await db.user
+        .findMany({
+          where: { role: { in: ["ADMIN_INSTANSI", "SUPER_ADMIN"] } },
+          select: { email: true, fullName: true },
+        })
+        .catch(() => []);
+
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      const bastUrl = `${baseUrl}/bast/${completeBast.id}`;
+
+      // Send emails to all admins in parallel (fire-and-forget)
+      Promise.all(
+        admins.map((admin) =>
+          sendEmail({
+            to: admin.email,
+            subject: `[EAMS] BAST Baru Menunggu Persetujuan: ${bastNumber}`,
+            html: bastApprovalEmailHtml({
+              approverName: admin.fullName,
+              bastNumber,
+              creatorName: completeBast.creator.fullName,
+              type: type as string,
+              assetCount: items.length,
+              bastUrl,
+            }),
+          }),
+        ),
+      ).catch((err) => console.error("[BAST] Email notification failed:", err));
+    }
+
+    return successResponse(completeBast, "BAST berhasil dibuat", 201);
   } catch (error) {
     console.error("Create BAST error:", error);
     return errorResponse("Failed to create BAST", 500);

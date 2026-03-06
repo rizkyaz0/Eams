@@ -87,10 +87,14 @@ export default function BastPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="HANDOVER">Handover</SelectItem>
-                      <SelectItem value="RETURN">Return</SelectItem>
-                      <SelectItem value="TRANSFER">Transfer</SelectItem>
-                      <SelectItem value="DISPOSAL">Disposal</SelectItem>
+                      <SelectItem value="PROCUREMENT">Pengadaan (Procurement)</SelectItem>
+                      <SelectItem value="ASSIGNMENT">Serah Terima (Assignment)</SelectItem>
+                      <SelectItem value="RETURN">Pengembalian (Return)</SelectItem>
+                      <SelectItem value="MUTATION">Mutasi (Mutation)</SelectItem>
+                      <SelectItem value="MAINTENANCE_OUT">Keluar ke Vendor</SelectItem>
+                      <SelectItem value="MAINTENANCE_IN">Kembali dari Vendor</SelectItem>
+                      <SelectItem value="DISPOSAL">Penghapusan (Disposal)</SelectItem>
+                      <SelectItem value="STOCK_OPNAME">Stock Opname</SelectItem>
                     </SelectContent>
                   </Select>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>

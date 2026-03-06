@@ -50,6 +50,7 @@ model User {
   approvedBasts Bast[]     @relation("BastApprover")
   createdBasts  Bast[]     @relation("BastCreator")
   division      Division?  @relation(fields: [divisionId], references: [id])
+  stockTakes    StockTake[]
 }
 
 model Asset {
@@ -60,8 +61,12 @@ model Asset {
   specification String?
   description   String?
   purchaseDate  DateTime
-  purchasePrice Decimal        @db.Decimal(15, 2)
-  imagePath     String?
+  purchasePrice      Decimal        @db.Decimal(15, 2)
+  salvageValue       Decimal?       @db.Decimal(15, 2)
+  usefulLife         Int?           // in months
+  depreciationMethod String?        @default("STRAIGHT_LINE")
+  rfidData           String?
+  imagePath          String?
   status        AssetStatus    @default(AVAILABLE)
   condition     AssetCondition @default(GOOD)
   categoryId    String
@@ -74,8 +79,11 @@ model Asset {
   division      Division?      @relation(fields: [divisionId], references: [id])
   holder        User?          @relation("CurrentHolder", fields: [holderId], references: [id])
   location      Location?      @relation(fields: [locationId], references: [id])
-  bastDetails   BastDetail[]
-  maintenances  Maintenance[]
+  bastDetails           BastDetail[]
+  maintenances          Maintenance[]
+  stockTakeDetails      StockTakeDetail[]
+  alerts                AssetAlert[]
+  maintenancePrediction MaintenancePrediction?
 
   @@index([tagNumber])
   @@index([status])
@@ -89,6 +97,7 @@ model Bast {
   description        String?
   fileUrl            String?
   status             String       @default("DRAFT")
+  currentApprovalLevel Int?       @default(1)
   effectiveDate      DateTime     @default(now())
   recipientName      String?
   recipientPosition  String?
@@ -146,6 +155,51 @@ model AuditLog {
   user      User     @relation(fields: [userId], references: [id])
 
   @@index([entity, entityId])
+}
+
+model StockTake {
+  id          String   @id @default(cuid())
+  title       String
+  startDate   DateTime
+  endDate     DateTime?
+  status      String   @default("OPEN") // OPEN, CLOSED, RECONCILED
+  auditorId   String
+  auditor     User     @relation(fields: [auditorId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  details     StockTakeDetail[]
+}
+
+model StockTakeDetail {
+  id          String   @id @default(cuid())
+  stockTakeId String
+  assetId     String
+  countedQty  Int      @default(0)
+  variance    Int      @default(0) // countedQty - expectedQty
+  condition   AssetCondition?
+  notes       String?
+  stockTake   StockTake @relation(fields: [stockTakeId], references: [id], onDelete: Cascade)
+  asset       Asset    @relation(fields: [assetId], references: [id])
+}
+
+model AssetAlert {
+  id          String   @id @default(cuid())
+  assetId     String
+  type        String   // STOLEN, UNAUTHORIZED_MOVE, etc
+  description String?
+  timestamp   DateTime @default(now())
+  resolved    Boolean  @default(false)
+  asset       Asset    @relation(fields: [assetId], references: [id])
+}
+
+model MaintenancePrediction {
+  id                   String   @id @default(cuid())
+  assetId              String   @unique
+  predictedFailureDate DateTime
+  confidenceScore      Float?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  asset                Asset    @relation(fields: [assetId], references: [id])
 }
 
 enum UserRole {

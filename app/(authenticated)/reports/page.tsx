@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { FileDown, FileSpreadsheet } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#a855f7", "#ec4899"];
@@ -46,9 +48,21 @@ export default function ReportsPage() {
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6 lg:p-10 w-full max-w-7xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Analytics Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Laporan komposisi dan metrik terpusat untuk mendiagnosa performa operasional aset Anda.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Analytics Dashboard</h1>
+          <p className="text-muted-foreground mt-1">Laporan komposisi dan metrik terpusat untuk mendiagnosa performa operasional aset Anda.</p>
+        </div>
+        <div className="flex gap-2 shrink-0">
+          <Button variant="outline" size="sm" onClick={() => window.open("/api/reports/export?format=excel", "_blank")}>
+            <FileSpreadsheet className="size-4 mr-2 text-emerald-600" />
+            Export Excel
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => window.open("/api/reports/export?format=pdf", "_blank")}>
+            <FileDown className="size-4 mr-2 text-red-500" />
+            Export PDF
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3 mb-4">

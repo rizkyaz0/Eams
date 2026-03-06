@@ -28,6 +28,9 @@ export function EditAssetDialog({ open, onOpenChange, onSuccess, asset, categori
     locationId: "",
     purchaseDate: "",
     purchasePrice: "",
+    salvageValue: "",
+    usefulLife: "",
+    rfidData: "",
     description: "",
     status: "",
     condition: "",
@@ -45,6 +48,9 @@ export function EditAssetDialog({ open, onOpenChange, onSuccess, asset, categori
         locationId: asset.locationId || "",
         purchaseDate: asset.purchaseDate ? asset.purchaseDate.split("T")[0] : "",
         purchasePrice: asset.purchasePrice?.toString() || "",
+        salvageValue: asset.salvageValue?.toString() || "",
+        usefulLife: asset.usefulLife?.toString() || "",
+        rfidData: asset.rfidData || "",
         description: asset.description || "",
         status: asset.status || "",
         condition: asset.condition || "",
@@ -79,6 +85,9 @@ export function EditAssetDialog({ open, onOpenChange, onSuccess, asset, categori
           categoryId: formData.categoryId || undefined,
           locationId: formData.locationId || undefined,
           purchasePrice: formData.purchasePrice ? parseFloat(formData.purchasePrice) : undefined,
+          salvageValue: formData.salvageValue ? parseFloat(formData.salvageValue) : undefined,
+          usefulLife: formData.usefulLife ? parseInt(formData.usefulLife) : undefined,
+          rfidData: formData.rfidData || undefined,
         }),
       });
 
@@ -226,9 +235,25 @@ export function EditAssetDialog({ open, onOpenChange, onSuccess, asset, categori
                 <Input id="purchaseDate" type="date" value={formData.purchaseDate} onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })} />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="purchasePrice">Purchase Price</Label>
+                <Label htmlFor="purchasePrice">Purchase Price (Rp)</Label>
                 <Input id="purchasePrice" type="number" value={formData.purchasePrice} onChange={(e) => setFormData({ ...formData, purchasePrice: e.target.value })} />
               </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="salvageValue">Nilai Sisa / Salvage Value (Rp)</Label>
+                <Input id="salvageValue" type="number" value={formData.salvageValue} onChange={(e) => setFormData({ ...formData, salvageValue: e.target.value })} placeholder="0" />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="usefulLife">Masa Pakai / Useful Life (Bulan)</Label>
+                <Input id="usefulLife" type="number" value={formData.usefulLife} onChange={(e) => setFormData({ ...formData, usefulLife: e.target.value })} placeholder="60" />
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="rfidData">RFID / EPC Tag (Opsional)</Label>
+              <Input id="rfidData" value={formData.rfidData} onChange={(e) => setFormData({ ...formData, rfidData: e.target.value })} placeholder="E2003411B802011820051B79" />
             </div>
 
             <div className="grid gap-2">

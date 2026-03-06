@@ -13,16 +13,47 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // Start transaction
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Get BAST
+      // 1. Get BAST and include related assets to check value
       const bast = await tx.bast.findUnique({
         where: { id },
-        include: { details: true },
+        include: {
+          details: {
+            include: {
+              asset: true,
+            },
+          },
+        },
       });
 
       if (!bast) throw new Error("BAST not found");
-      if (bast.status !== "PENDING") throw new Error("BAST is not pending");
+      if (bast.status !== "PENDING" && bast.status !== "PENDING_MGR") throw new Error("BAST is not in a pending review state");
 
-      // 2. Update BAST
+      // Multi-Tier Workflow Engine: Calculate threshold
+      const totalValue = bast.details.reduce((sum, d) => sum + Number(d.asset.purchasePrice || 0), 0);
+      const HIGH_VALUE_THRESHOLD = 20000000; // Rp 20.000.000
+
+      let targetStatus = "APPROVED";
+
+      if (bast.status === "PENDING" && totalValue > HIGH_VALUE_THRESHOLD) {
+        // If the user isn't high-ranking, push to Manager Queue
+        if (user.role !== "SUPER_ADMIN" && user.role !== "ADMIN_INSTANSI") {
+          targetStatus = "PENDING_MGR";
+        }
+      }
+
+      // Handle intermediate hierarchy step without triggering asset automations
+      if (targetStatus === "PENDING_MGR") {
+        const delegatedBast = await tx.bast.update({
+          where: { id },
+          data: {
+            status: "PENDING_MGR",
+            currentApprovalLevel: 2,
+          },
+        });
+        return { ...delegatedBast, message: "Persetujuan tahap 1 selesai. Menunggu persetujuan Manager (Aset > 20 Jt)." };
+      }
+
+      // 2. Full Approval - Update BAST target
       const updatedBast = await tx.bast.update({
         where: { id },
         data: {

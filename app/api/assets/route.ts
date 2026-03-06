@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { name, tagNumber, serialNumber, specification, purchaseDate, purchasePrice, imagePath, categoryId, locationId, divisionId, status, condition } = body;
+    const { name, tagNumber, serialNumber, specification, purchaseDate, purchasePrice, imagePath, categoryId, locationId, divisionId, status, condition, salvageValue, usefulLife, rfidData } = body;
 
     // Validation
     if (!name || !tagNumber || !purchaseDate || !purchasePrice || !categoryId) {
@@ -122,6 +122,9 @@ export async function POST(request: NextRequest) {
         divisionId: divisionId || null,
         status: (status as AssetStatus) || AssetStatus.AVAILABLE,
         condition: (condition as AssetCondition) || AssetCondition.GOOD,
+        salvageValue: salvageValue || null,
+        usefulLife: usefulLife || null,
+        rfidData: rfidData || null,
       },
       include: {
         category: true,

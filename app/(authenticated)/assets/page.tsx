@@ -42,8 +42,8 @@ export default function AssetsPage() {
         page: page.toString(),
         limit: "10",
         ...(search && { search }),
-        ...(statusFilter && { status: statusFilter }),
-        ...(categoryFilter && { categoryId: categoryFilter }),
+        ...(statusFilter && statusFilter !== "all" && { status: statusFilter }),
+        ...(categoryFilter && categoryFilter !== "all" && { categoryId: categoryFilter }),
       });
 
       const response = await fetch(`/api/assets?${params}`);

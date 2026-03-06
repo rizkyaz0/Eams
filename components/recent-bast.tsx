@@ -1,6 +1,8 @@
-import { FileText, Clock, CheckCircle, XCircle } from "lucide-react";
+import Link from "next/link";
+import { FileText, Clock, CheckCircle, XCircle, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface RecentBastProps {
   data?: Array<{
@@ -21,11 +23,15 @@ const statusConfig = {
   DRAFT: { label: "Draft", variant: "outline" as const, icon: FileText, color: "text-gray-600" },
 };
 
-const typeLabel = {
-  HANDOVER: "Handover",
-  RETURN: "Return",
-  TRANSFER: "Transfer",
-  DISPOSAL: "Disposal",
+const typeLabel: Record<string, string> = {
+  PROCUREMENT: "Pengadaan",
+  ASSIGNMENT: "Serah Terima",
+  RETURN: "Pengembalian",
+  MUTATION: "Mutasi",
+  MAINTENANCE_OUT: "Keluar Perbaikan",
+  MAINTENANCE_IN: "Kembali Perbaikan",
+  DISPOSAL: "Penghapusan",
+  STOCK_OPNAME: "Stock Opname",
 };
 
 export function RecentBast({ data }: RecentBastProps) {
@@ -43,8 +49,17 @@ export function RecentBast({ data }: RecentBastProps) {
   return (
     <Card className="mx-4 lg:mx-6">
       <CardHeader>
-        <CardTitle>Recent BAST Transactions</CardTitle>
-        <CardDescription>Latest asset transaction records</CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Transaksi BAST Terbaru</CardTitle>
+            <CardDescription>5 transaksi aset terakhir di sistem</CardDescription>
+          </div>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/bast">
+              Lihat Semua <ArrowRight className="ml-2 size-3" />
+            </Link>
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">

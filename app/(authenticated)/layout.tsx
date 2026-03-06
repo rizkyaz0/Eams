@@ -2,11 +2,11 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { getCurrentUser } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export default async function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
-
-  // JWT payload is already a plain object
+  if (!user) redirect("/login");
 
   return (
     <SidebarProvider

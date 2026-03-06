@@ -7,6 +7,7 @@ import { AssetStatus } from "@prisma/client";
 
 /**
  * GET /api/dashboard - Get dashboard statistics
+ * OPTIMIZED: All queries run in parallel via Promise.all() instead of sequentially
  */
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
@@ -15,21 +16,64 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Get asset counts by status
-    const assetsByStatus = await db.asset.groupBy({
-      by: ["status"],
-      _count: true,
-    });
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const statusCounts = {
-      total: 0,
-      available: 0,
-      inUse: 0,
-      inMaintenance: 0,
-      missing: 0,
-      disposed: 0,
-    };
+    // ✅ PERFORMANCE: Run all 8 independent DB queries in parallel.
+    // Previously these ran sequentially (7+ round trips). Now: 1 round trip.
+    const [assetsByStatus, assetsByCategory, recentBasts, maintenanceAlerts, aiPredictions, usersByRole, assetValues, recentAssets, recentMaintenance, recentBastsRaw] = await Promise.all([
+      db.asset.groupBy({ by: ["status"], _count: true }),
 
+      db.category.findMany({
+        select: { id: true, name: true, _count: { select: { assets: true } } },
+        orderBy: { name: "asc" },
+      }),
+
+      db.bast.findMany({
+        take: 10,
+        orderBy: { createdAt: "desc" },
+        include: {
+          creator: { select: { fullName: true } },
+          _count: { select: { details: true } },
+        },
+      }),
+
+      db.asset.findMany({
+        where: { status: AssetStatus.IN_MAINTENANCE },
+        include: {
+          category: true,
+          location: true,
+          maintenances: { where: { status: "IN_PROGRESS" }, orderBy: { startDate: "desc" }, take: 1 },
+        },
+        take: 10,
+      }),
+
+      db.maintenancePrediction.findMany({
+        take: 5,
+        orderBy: { predictedFailureDate: "asc" },
+        where: { predictedFailureDate: { gte: new Date() } },
+        include: {
+          asset: { select: { name: true, tagNumber: true, category: { select: { name: true } } } },
+        },
+      }),
+
+      db.user.groupBy({ by: ["role"], _count: true }),
+
+      db.asset.aggregate({
+        _sum: { purchasePrice: true },
+        _avg: { purchasePrice: true },
+        where: { status: { not: AssetStatus.DISPOSED } },
+      }),
+
+      db.asset.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
+
+      db.maintenance.findMany({ take: 5, orderBy: { updatedAt: "desc" }, include: { asset: true } }),
+
+      db.bast.findMany({ take: 5, orderBy: { createdAt: "desc" }, include: { creator: true } }),
+    ]);
+
+    // Compute status counts from grouped results
+    const statusCounts = { total: 0, available: 0, inUse: 0, inMaintenance: 0, missing: 0, disposed: 0 };
     assetsByStatus.forEach((item) => {
       statusCounts.total += item._count;
       switch (item.status) {
@@ -50,106 +94,6 @@ export async function GET(request: NextRequest) {
           break;
       }
     });
-
-    // Get assets by category
-    const assetsByCategory = await db.category.findMany({
-      select: {
-        id: true,
-        name: true,
-        _count: {
-          select: { assets: true },
-        },
-      },
-      orderBy: {
-        name: "asc",
-      },
-    });
-
-    // Get recent BAST (last 10)
-    const recentBasts = await db.bast.findMany({
-      take: 10,
-      orderBy: {
-        createdAt: "desc",
-      },
-      include: {
-        creator: {
-          select: {
-            fullName: true,
-          },
-        },
-        _count: {
-          select: { details: true },
-        },
-      },
-    });
-
-    // Get assets needing maintenance (in maintenance status)
-    const maintenanceAlerts = await db.asset.findMany({
-      where: {
-        status: AssetStatus.IN_MAINTENANCE,
-      },
-      include: {
-        category: true,
-        location: true,
-        maintenances: {
-          where: {
-            status: "IN_PROGRESS",
-          },
-          orderBy: {
-            startDate: "desc",
-          },
-          take: 1,
-        },
-      },
-      take: 10,
-    });
-
-    // Get total users by role
-    const usersByRole = await db.user.groupBy({
-      by: ["role"],
-      _count: true,
-    });
-
-    // Get asset value statistics
-    const assetValues = await db.asset.aggregate({
-      _sum: {
-        purchasePrice: true,
-      },
-      _avg: {
-        purchasePrice: true,
-      },
-      where: {
-        status: {
-          not: AssetStatus.DISPOSED,
-        },
-      },
-    });
-
-    // Get recent asset additions (last 7 days)
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-    const recentAssets = await db.asset.count({
-      where: {
-        createdAt: {
-          gte: sevenDaysAgo,
-        },
-      },
-    });
-
-    // Get recent activities (combined BAST and Maintenance)
-    const [recentMaintenance, recentBastsRaw] = await Promise.all([
-      db.maintenance.findMany({
-        take: 5,
-        orderBy: { updatedAt: "desc" },
-        include: { asset: true },
-      }),
-      db.bast.findMany({
-        take: 5,
-        orderBy: { createdAt: "desc" },
-        include: { creator: true },
-      }),
-    ]);
 
     const recentActivities = [
       ...recentMaintenance.map((m) => ({
@@ -201,6 +145,15 @@ export async function GET(request: NextRequest) {
         category: asset.category.name,
         location: asset.location?.name,
         maintenance: asset.maintenances[0] || null,
+      })),
+      aiPredictions: aiPredictions.map((p) => ({
+        id: p.id,
+        assetId: p.assetId,
+        assetName: p.asset.name,
+        tagNumber: p.asset.tagNumber,
+        categoryName: p.asset.category.name,
+        predictedFailureDate: p.predictedFailureDate,
+        confidenceScore: p.confidenceScore,
       })),
       userStatistics: usersByRole.map((item) => ({
         role: item.role,

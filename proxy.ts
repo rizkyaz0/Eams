@@ -3,68 +3,93 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyToken } from "./lib/auth";
 
-// Routes yang memerlukan authentication
-const protectedRoutes = ["/dashboard", "/api/assets", "/api/users", "/api/bast", "/api/maintenance", "/api/categories", "/api/divisions", "/api/locations"];
+// Routes that require authentication (Pages & API)
+const protectedRoutes = [
+  "/dashboard",
+  "/assets",
+  "/bast",
+  "/maintenance",
+  "/users",
+  "/categories",
+  "/locations",
+  "/history",
+  "/reports",
+  "/approvals",
+  "/stocktake",
+  "/settings",
+  "/api/assets",
+  "/api/users",
+  "/api/bast",
+  "/api/maintenance",
+  "/api/categories",
+  "/api/divisions",
+  "/api/locations",
+  "/api/reports",
+  "/api/dashboard",
+  "/api/stocktake",
+  "/api/history",
+  "/api/approvals",
+];
 
-// Routes yang hanya bisa diakses saat belum login
+// Routes only accessible when NOT logged in
 const authRoutes = ["/login", "/register"];
 
+// IMPORTANT: Project specific naming convention 'proxy' instead of 'middleware'
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for auth login/register API
-  if (pathname === "/api/auth/login" || pathname === "/api/auth/register") {
+  // Skip middleware for auth API routes (login/register)
+  if (pathname.startsWith("/api/auth")) {
     return NextResponse.next();
   }
 
   // Get token from cookie
-  const token = request.cookies.get("auth-token");
+  const token = request.cookies.get("auth-token")?.value;
 
-  // Check if route is protected
+  // Check route types
   const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
   const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
 
-  // Verify token if exists
-  let user = null;
-  if (token) {
-    user = await verifyToken(token.value);
-  }
+  // Verify token
+  const user = token ? await verifyToken(token) : null;
 
-  // Redirect to login if accessing protected route without valid token
+  // 1. Redirect to login if accessing protected route without valid token
   if (isProtectedRoute && !user) {
     if (pathname.startsWith("/api")) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ success: false, error: "Unauthorized. Please login again." }, { status: 401 });
     }
     const url = new URL("/login", request.url);
-    url.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(url);
+    url.searchParams.set("from", pathname);
+    const response = NextResponse.redirect(url);
+    if (token) response.cookies.delete("auth-token");
+    return response;
   }
 
-  // Redirect to dashboard if accessing auth routes with valid token
+  // 2. Redirect to dashboard if accessing auth routes with valid token
   if (isAuthRoute && user) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  // Add user to headers for API routes
+  // 3. Pass user info to API routes via headers
+  // Using the standard Next.js way to continue with request headers
   if (user && pathname.startsWith("/api")) {
-    const response = NextResponse.next();
-    response.headers.set("x-user-id", user.userId);
-    response.headers.set("x-user-role", user.role);
-    return response;
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-user-id", user.userId);
+    requestHeaders.set("x-user-role", user.role);
+
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
   }
 
   return NextResponse.next();
 }
 
+// For Next.js to recognize it as a proxy export if named differently
+export default proxy;
+
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-  ],
+  matcher: ["/((?!_next|favicon.ico|api/auth|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
 };

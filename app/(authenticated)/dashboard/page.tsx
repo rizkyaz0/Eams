@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { DashboardStats } from "@/components/dashboard-stats";
 import { DashboardCharts } from "@/components/dashboard-charts";
 import { RecentBast } from "@/components/recent-bast";
+import { AIPredictiveAlerts } from "@/components/ai-predictive-alerts";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardPage() {
@@ -45,6 +46,11 @@ export default function DashboardPage() {
               <div className="px-4 lg:px-6">
                 <DashboardCharts data={dashboardData?.assetsByCategory} />
               </div>
+              {dashboardData?.aiPredictions && dashboardData.aiPredictions.length > 0 && (
+                <div className="px-4 lg:px-6">
+                  <AIPredictiveAlerts predictions={dashboardData.aiPredictions} />
+                </div>
+              )}
               <RecentBast data={dashboardData?.recentBasts} />
             </>
           )}

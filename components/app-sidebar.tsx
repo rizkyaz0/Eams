@@ -3,7 +3,7 @@
 import * as React from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Package, FileText, Users, Settings, Wrench, Building2, QrCode, Activity, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Package, FileText, Users, Settings, Wrench, Building2, QrCode, Activity, BarChart3, CheckCircle2, ListChecks } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
@@ -45,6 +45,20 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
       roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET", "EMPLOYEE"],
     },
     {
+      title: "Approvals",
+      url: "/approvals",
+      icon: CheckCircle2,
+      isActive: pathname?.startsWith("/approvals"),
+      roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
+    },
+    {
+      title: "Stock-Take",
+      url: "/stocktake",
+      icon: ListChecks,
+      isActive: pathname?.startsWith("/stocktake"),
+      roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET", "TEKNISI", "EMPLOYEE"],
+    },
+    {
       title: "Maintenance",
       url: "/maintenance",
       icon: Wrench,
@@ -64,6 +78,13 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
       icon: Building2,
       isActive: pathname?.startsWith("/locations"),
       roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
+    },
+    {
+      title: "Divisi",
+      url: "/divisions",
+      icon: Users,
+      isActive: pathname?.startsWith("/divisions"),
+      roles: ["SUPER_ADMIN", "ADMIN_INSTANSI"],
     },
     {
       title: "Users",

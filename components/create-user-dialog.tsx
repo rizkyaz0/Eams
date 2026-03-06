@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Loader2, Eye, EyeOff, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 
 interface CreateUserDialogProps {
   open: boolean;
@@ -18,7 +18,7 @@ interface CreateUserDialogProps {
 export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDialogProps) {
   const [loading, setLoading] = useState(false);
   const [divisions, setDivisions] = useState<any[]>([]);
-  const { toast } = useToast();
+  const [showPassword, setShowPassword] = useState(false);
 
   // Form state
   const [fullName, setFullName] = useState("");
@@ -40,11 +40,21 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
       const response = await fetch("/api/divisions");
       const data = await response.json();
       if (data.success) {
-        setDivisions(data.data.divisions || []);
+        // API returns data directly as array, not data.divisions
+        setDivisions(Array.isArray(data.data) ? data.data : []);
       }
     } catch (error) {
       console.error("Failed to fetch divisions:", error);
     }
+  };
+
+  const generateRandomPassword = () => {
+    const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789@#!";
+    let pwd = "";
+    for (let i = 0; i < 12; i++) pwd += chars[Math.floor(Math.random() * chars.length)];
+    setPassword(pwd);
+    setShowPassword(true);
+    toast.success("Password digenerate! Salin sebelum menyimpan.");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -73,10 +83,7 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
         throw new Error(data.error || "Failed to create user");
       }
 
-      toast({
-        title: "Success",
-        description: "User created successfully",
-      });
+      toast.success("User berhasil dibuat!");
 
       // Reset form
       setFullName("");
@@ -88,11 +95,7 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
 
       onSuccess();
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Gagal membuat user");
     } finally {
       setLoading(false);
     }
@@ -116,8 +119,18 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="john@example.com" required />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password *</Label>
+                <Button type="button" variant="ghost" size="sm" className="h-6 text-xs text-muted-foreground" onClick={generateRandomPassword}>
+                  <RefreshCw className="size-3 mr-1" /> Generate
+                </Button>
+              </div>
+              <div className="relative">
+                <Input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required className="pr-9" placeholder="Min. 8 karakter" />
+                <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(!showPassword)}>
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="nip">NIP (Optional)</Label>
