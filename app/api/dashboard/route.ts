@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       }),
 
       db.bast.findMany({
-        take: 10,
+        take: 5,
         orderBy: { createdAt: "desc" },
         include: {
           creator: { select: { fullName: true } },

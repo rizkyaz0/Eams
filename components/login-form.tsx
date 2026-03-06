@@ -84,7 +84,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
 
               <div className="mt-4 text-center text-sm text-muted-foreground">
                 <p>Demo Account:</p>
-                <p className="font-mono text-xs mt-1">admin@kantor.com / admin123</p>
+                <p className="font-mono text-xs mt-1">**** / ****</p>
               </div>
             </div>
           </form>

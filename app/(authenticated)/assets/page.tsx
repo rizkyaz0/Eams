@@ -196,6 +196,7 @@ export default function AssetsPage() {
           fetchAssets();
         }}
         categories={categories}
+        locations={locations}
       />
 
       <QrScannerDialog open={scannerOpen} onOpenChange={setScannerOpen} />

@@ -19,6 +19,7 @@ export default function UsersPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [deleteUser, setDeleteUser] = useState<any>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -47,6 +48,13 @@ export default function UsersPage() {
   useEffect(() => {
     setIsMounted(true);
     fetchUsers();
+    // Fetch the currently logged-in user to enable self-protection in the table
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success) setCurrentUserId(d.data.id);
+      })
+      .catch(() => {});
   }, [page, search, roleFilter]);
 
   if (!isMounted) {
@@ -98,7 +106,7 @@ export default function UsersPage() {
           </Select>
         </div>
 
-        <UsersTable users={users} loading={loading} page={page} total={total} onPageChange={setPage} onRefresh={fetchUsers} onDelete={setDeleteUser} />
+        <UsersTable users={users} loading={loading} page={page} total={total} onPageChange={setPage} onRefresh={fetchUsers} onDelete={setDeleteUser} currentUserId={currentUserId ?? undefined} />
       </div>
 
       <CreateUserDialog

@@ -18,6 +18,7 @@ interface UsersTableProps {
   onPageChange: (page: number) => void;
   onRefresh: () => void;
   onDelete: (user: any) => void;
+  currentUserId?: string; // to disable self-edit/delete
 }
 
 const roleConfig = {
@@ -28,7 +29,7 @@ const roleConfig = {
   EMPLOYEE: { label: "Employee", color: "bg-gray-500 text-white" },
 };
 
-export function UsersTable({ users, loading, page, total, onPageChange, onRefresh, onDelete }: UsersTableProps) {
+export function UsersTable({ users, loading, page, total, onPageChange, onRefresh, onDelete, currentUserId }: UsersTableProps) {
   const [editUser, setEditUser] = useState<any>(null);
 
   const limit = 10;
@@ -75,9 +76,15 @@ export function UsersTable({ users, loading, page, total, onPageChange, onRefres
             <TableBody>
               {users.map((user) => {
                 const role = roleConfig[user.role as keyof typeof roleConfig] || { label: user.role, color: "" };
+                const isSelf = currentUserId === user.id;
                 return (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.fullName}</TableCell>
+                  <TableRow key={user.id} className={isSelf ? "bg-muted/30" : ""}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        {user.fullName}
+                        {isSelf && <span className="text-[10px] bg-primary/10 text-primary font-bold px-1.5 py-0.5 rounded-full">Anda</span>}
+                      </div>
+                    </TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>{user.nip || "-"}</TableCell>
                     <TableCell>
@@ -87,25 +94,29 @@ export function UsersTable({ users, loading, page, total, onPageChange, onRefres
                     </TableCell>
                     <TableCell>{user.division?.name || "-"}</TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => setEditUser(user)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive" onClick={() => onDelete(user)}>
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {isSelf ? (
+                        <span className="text-xs text-muted-foreground italic pr-2">Akun aktif</span>
+                      ) : (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => setEditUser(user)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onClick={() => onDelete(user)}>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </TableCell>
                   </TableRow>
                 );

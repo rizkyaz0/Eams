@@ -8,11 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, ChevronLeft, ChevronRight, Search, UserCheck, MapPin } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Search, UserCheck, MapPin, Wrench, Trash2, Package } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { createBast } from "@/lib/actions/bast-actions";
-import { BastType, AssetCondition } from "@prisma/client";
+import { BastType } from "@prisma/client";
 
 interface CreateBastDialogProps {
   open: boolean;
@@ -38,6 +37,27 @@ const NEEDS_LOCATION: BastType[] = [BastType.ASSIGNMENT, BastType.MUTATION, Bast
 // For these types, fetch only AVAILABLE assets
 const AVAILABLE_ONLY_TYPES: BastType[] = [BastType.ASSIGNMENT, BastType.MUTATION, BastType.DISPOSAL, BastType.MAINTENANCE_OUT, BastType.PROCUREMENT, BastType.STOCK_OPNAME];
 
+const INITIAL_FORM = {
+  type: "" as BastType | "",
+  recipientName: "",
+  recipientPosition: "",
+  recipientUserId: "",
+  targetLocationId: "",
+  notes: "",
+  loanStartDate: "",
+  loanEndDate: "",
+  // MAINTENANCE
+  vendorName: "",
+  repairDescription: "",
+  estimatedReturnDate: "",
+  // DISPOSAL
+  disposalReason: "",
+  disposalMethod: "",
+  // PROCUREMENT
+  procurementSource: "",
+  contractNumber: "",
+};
+
 export function CreateBastDialog({ open, onOpenChange, onSuccess }: CreateBastDialogProps) {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
@@ -46,22 +66,16 @@ export function CreateBastDialog({ open, onOpenChange, onSuccess }: CreateBastDi
   const [locations, setLocations] = useState<any[]>([]);
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [formData, setFormData] = useState({
-    type: "" as BastType | "",
-    recipientName: "",
-    recipientPosition: "",
-    recipientUserId: "", // The system user who becomes the new holder
-    targetLocationId: "", // Default target location for all items
-    notes: "",
-    loanStartDate: "",
-    loanEndDate: "",
-  });
+  const [formData, setFormData] = useState(INITIAL_FORM);
 
   const filteredAssets = assets.filter((asset) => asset.name.toLowerCase().includes(searchQuery.toLowerCase()) || asset.tagNumber.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const needsHolder = formData.type && NEEDS_HOLDER.includes(formData.type as BastType);
   const needsLocation = formData.type && NEEDS_LOCATION.includes(formData.type as BastType);
   const isLoan = formData.type === BastType.ASSIGNMENT;
+  const isMaintenance = formData.type === BastType.MAINTENANCE_OUT || formData.type === BastType.MAINTENANCE_IN;
+  const isDisposal = formData.type === BastType.DISPOSAL;
+  const isProcurement = formData.type === BastType.PROCUREMENT;
 
   useEffect(() => {
     if (open) {
@@ -112,16 +126,7 @@ export function CreateBastDialog({ open, onOpenChange, onSuccess }: CreateBastDi
   };
 
   const resetForm = () => {
-    setFormData({
-      type: "",
-      recipientName: "",
-      recipientPosition: "",
-      recipientUserId: "",
-      targetLocationId: "",
-      notes: "",
-      loanStartDate: "",
-      loanEndDate: "",
-    });
+    setFormData(INITIAL_FORM);
     setSelectedAssets([]);
     setSearchQuery("");
     setStep(1);
@@ -135,7 +140,7 @@ export function CreateBastDialog({ open, onOpenChange, onSuccess }: CreateBastDi
 
     setLoading(true);
     try {
-      // Resolve recipient name from selected user if needed
+      // Resolve recipient name from system user when applicable
       let recipientName = formData.recipientName;
       let recipientPosition = formData.recipientPosition;
 
@@ -147,20 +152,39 @@ export function CreateBastDialog({ open, onOpenChange, onSuccess }: CreateBastDi
         }
       }
 
-      const result = await createBast({
-        type: formData.type as BastType,
-        recipientName,
-        recipientPosition,
-        description: formData.notes,
-        loanStartDate: isLoan && formData.loanStartDate ? new Date(formData.loanStartDate) : undefined,
-        loanEndDate: isLoan && formData.loanEndDate ? new Date(formData.loanEndDate) : undefined,
-        items: selectedAssets.map((assetId) => ({
-          assetId,
-          conditionAfter: AssetCondition.GOOD,
-          targetLocationId: formData.targetLocationId || undefined,
-          targetHolderId: formData.recipientUserId || undefined,
-        })),
+      // Build type-specific notes prefix
+      let notes = formData.notes || "";
+      if (isMaintenance && formData.vendorName) {
+        notes = `Vendor: ${formData.vendorName}\n${formData.repairDescription || ""}\n${notes}`.trim();
+      }
+      if (isDisposal && formData.disposalReason) {
+        notes = `Alasan: ${formData.disposalReason}\nMetode: ${formData.disposalMethod || "-"}\n${notes}`.trim();
+      }
+      if (isProcurement && formData.procurementSource) {
+        notes = `Sumber: ${formData.procurementSource}\nNo. Kontrak: ${formData.contractNumber || "-"}\n${notes}`.trim();
+      }
+
+      // ✅ Use fetch() instead of Server Action to avoid "Failed to find Server Action" hot-reload errors
+      const response = await fetch("/api/bast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: formData.type,
+          recipientName,
+          recipientPosition,
+          description: notes || undefined,
+          loanStartDate: isLoan && formData.loanStartDate ? new Date(formData.loanStartDate) : undefined,
+          loanEndDate: isLoan && formData.loanEndDate ? new Date(formData.loanEndDate) : undefined,
+          items: selectedAssets.map((assetId) => ({
+            assetId,
+            conditionAfter: "GOOD",
+            targetLocationId: formData.targetLocationId && formData.targetLocationId !== "none" ? formData.targetLocationId : undefined,
+            targetHolderId: formData.recipientUserId || undefined,
+          })),
+        }),
       });
+
+      const result = await response.json();
 
       if (result.success) {
         toast.success(`BAST ${BAST_TYPE_LABELS[formData.type as string] || ""} berhasil dibuat!`);
@@ -176,7 +200,9 @@ export function CreateBastDialog({ open, onOpenChange, onSuccess }: CreateBastDi
     }
   };
 
-  const canProceedToStep2 = formData.type && formData.recipientName;
+  // Validate step 1 based on type
+  const canProceedToStep2 = formData.type && (isMaintenance ? !!formData.vendorName : isDisposal ? !!formData.disposalReason : !!formData.recipientName);
+
   const canSubmit = selectedAssets.length > 0;
 
   return (
@@ -191,13 +217,13 @@ export function CreateBastDialog({ open, onOpenChange, onSuccess }: CreateBastDi
         <DialogHeader>
           <DialogTitle>Buat BAST Baru</DialogTitle>
           <DialogDescription>
-            Langkah {step} dari 2: {step === 1 ? "Informasi Dasar & Penerima" : "Pilih Aset"}
+            Langkah {step} dari 2: {step === 1 ? "Informasi & Penerima" : "Pilih Aset"}
           </DialogDescription>
         </DialogHeader>
 
-        {/* Progress indicator */}
+        {/* Progress bar */}
         <div className="flex gap-2 mb-2">
-          {["Info Dasar", "Pilih Aset"].map((label, i) => (
+          {["Informasi Dasar", "Pilih Aset"].map((label, i) => (
             <div key={i} className={`flex-1 h-1.5 rounded-full transition-colors ${step > i ? "bg-primary" : "bg-muted"}`} />
           ))}
         </div>
@@ -205,13 +231,13 @@ export function CreateBastDialog({ open, onOpenChange, onSuccess }: CreateBastDi
         {/* ── STEP 1 ── */}
         {step === 1 && (
           <div className="grid gap-4 py-2">
-            {/* BAST Type */}
+            {/* BAST Type Selector */}
             <div className="grid gap-2">
               <Label>Tipe BAST *</Label>
               <Select
                 value={formData.type}
                 onValueChange={(value) => {
-                  setFormData({ ...formData, type: value as BastType });
+                  setFormData({ ...INITIAL_FORM, type: value as BastType });
                   setSelectedAssets([]);
                 }}
               >
@@ -228,56 +254,131 @@ export function CreateBastDialog({ open, onOpenChange, onSuccess }: CreateBastDi
               </Select>
             </div>
 
-            {/* Recipient section */}
-            <div className="border rounded-xl p-4 bg-muted/30 grid gap-3">
-              <p className="text-sm font-semibold flex items-center gap-2">
-                <UserCheck className="size-4 text-primary" />
-                {needsHolder ? "Diserahkan Kepada (Penanggung Jawab Baru)" : "Penerima / Kontak"}
-              </p>
-
-              {/* If type requires a system user as new holder, show user dropdown */}
-              {needsHolder && (
+            {/* ── MAINTENANCE type fields ── */}
+            {isMaintenance && (
+              <div className="border rounded-xl p-4 bg-muted/30 grid gap-3">
+                <p className="text-sm font-semibold flex items-center gap-2">
+                  <Wrench className="size-4 text-primary" />
+                  Informasi Vendor Perbaikan
+                </p>
                 <div className="grid gap-2">
-                  <Label className="text-xs">Pilih User Sistem (Penanggung Jawab)</Label>
-                  <Select
-                    value={formData.recipientUserId}
-                    onValueChange={(v) => {
-                      const u = users.find((u) => u.id === v);
-                      setFormData({
-                        ...formData,
-                        recipientUserId: v,
-                        recipientName: u?.fullName || formData.recipientName,
-                        recipientPosition: u?.role || formData.recipientPosition,
-                      });
-                    }}
-                  >
+                  <Label className="text-xs">Nama Vendor / Workshop *</Label>
+                  <Input value={formData.vendorName} onChange={(e) => setFormData({ ...formData, vendorName: e.target.value })} placeholder="CV. Teknisi Maju, PT. Service Center, dll." />
+                </div>
+                <div className="grid gap-2">
+                  <Label className="text-xs">Deskripsi Kerusakan / Pekerjaan</Label>
+                  <Textarea value={formData.repairDescription} onChange={(e) => setFormData({ ...formData, repairDescription: e.target.value })} rows={2} placeholder="Kerusakan layar, ganti baterai, service rutin, dll." />
+                </div>
+                {formData.type === "MAINTENANCE_OUT" && (
+                  <div className="grid gap-2">
+                    <Label className="text-xs">Estimasi Tanggal Kembali</Label>
+                    <Input type="date" value={formData.estimatedReturnDate} onChange={(e) => setFormData({ ...formData, estimatedReturnDate: e.target.value })} />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── DISPOSAL type fields ── */}
+            {isDisposal && (
+              <div className="border rounded-xl p-4 bg-muted/30 grid gap-3">
+                <p className="text-sm font-semibold flex items-center gap-2">
+                  <Trash2 className="size-4 text-destructive" />
+                  Informasi Penghapusan Aset
+                </p>
+                <div className="grid gap-2">
+                  <Label className="text-xs">Alasan Penghapusan *</Label>
+                  <Textarea value={formData.disposalReason} onChange={(e) => setFormData({ ...formData, disposalReason: e.target.value })} rows={2} placeholder="Aset rusak total, sudah melewati masa pakai, dll." />
+                </div>
+                <div className="grid gap-2">
+                  <Label className="text-xs">Metode Penghapusan</Label>
+                  <Select value={formData.disposalMethod} onValueChange={(v) => setFormData({ ...formData, disposalMethod: v })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Pilih pengguna sistem..." />
+                      <SelectValue placeholder="Pilih metode..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {users.map((u) => (
-                        <SelectItem key={u.id} value={u.id}>
-                          {u.fullName} — {u.role} {u.division ? `(${u.division.name})` : ""}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="lelang">Dilelang</SelectItem>
+                      <SelectItem value="hibah">Dihibahkan</SelectItem>
+                      <SelectItem value="dimusnahkan">Dimusnahkan</SelectItem>
+                      <SelectItem value="dijual">Dijual</SelectItem>
+                      <SelectItem value="dikembalikan">Dikembalikan ke Pusat</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-              )}
+              </div>
+            )}
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="grid gap-2">
-                  <Label className="text-xs">Nama Penerima *</Label>
-                  <Input value={formData.recipientName} onChange={(e) => setFormData({ ...formData, recipientName: e.target.value })} placeholder="Nama penerima..." />
-                </div>
-                <div className="grid gap-2">
-                  <Label className="text-xs">Jabatan / Posisi</Label>
-                  <Input value={formData.recipientPosition} onChange={(e) => setFormData({ ...formData, recipientPosition: e.target.value })} placeholder="Staff IT, Manager, dll." />
+            {/* ── PROCUREMENT type fields ── */}
+            {isProcurement && (
+              <div className="border rounded-xl p-4 bg-muted/30 grid gap-3">
+                <p className="text-sm font-semibold flex items-center gap-2">
+                  <Package className="size-4 text-primary" />
+                  Informasi Pengadaan
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="grid gap-2">
+                    <Label className="text-xs">Sumber Pengadaan</Label>
+                    <Input value={formData.procurementSource} onChange={(e) => setFormData({ ...formData, procurementSource: e.target.value })} placeholder="APBN, APBD, Hibah, dll." />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className="text-xs">Nomor Kontrak / SPK</Label>
+                    <Input value={formData.contractNumber} onChange={(e) => setFormData({ ...formData, contractNumber: e.target.value })} placeholder="2025/KTR/001" />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* Target location */}
+            {/* ── Recipient section — hidden for MAINTENANCE types ── */}
+            {!isMaintenance && (
+              <div className="border rounded-xl p-4 bg-muted/30 grid gap-3">
+                <p className="text-sm font-semibold flex items-center gap-2">
+                  <UserCheck className="size-4 text-primary" />
+                  {needsHolder ? "Diserahkan Kepada (Penanggung Jawab Baru)" : "Penerima / Kontak"}
+                </p>
+
+                {/* User dropdown when type requires a system holder */}
+                {needsHolder && (
+                  <div className="grid gap-2">
+                    <Label className="text-xs">Pilih Pengguna Sistem (Penanggung Jawab)</Label>
+                    <Select
+                      value={formData.recipientUserId}
+                      onValueChange={(v) => {
+                        const u = users.find((u) => u.id === v);
+                        setFormData({
+                          ...formData,
+                          recipientUserId: v,
+                          recipientName: u?.fullName || formData.recipientName,
+                          recipientPosition: u?.role || formData.recipientPosition,
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih pengguna sistem..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {users.map((u) => (
+                          <SelectItem key={u.id} value={u.id}>
+                            {u.fullName} — {u.role} {u.division ? `(${u.division.name})` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="grid gap-2">
+                    <Label className="text-xs">Nama Penerima *</Label>
+                    <Input value={formData.recipientName} onChange={(e) => setFormData({ ...formData, recipientName: e.target.value })} placeholder="Nama penerima..." />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className="text-xs">Jabatan / Posisi</Label>
+                    <Input value={formData.recipientPosition} onChange={(e) => setFormData({ ...formData, recipientPosition: e.target.value })} placeholder="Staff IT, Manager, dll." />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── Target Location ── */}
             {needsLocation && (
               <div className="border rounded-xl p-4 bg-muted/30 grid gap-3">
                 <p className="text-sm font-semibold flex items-center gap-2">
@@ -300,7 +401,7 @@ export function CreateBastDialog({ open, onOpenChange, onSuccess }: CreateBastDi
               </div>
             )}
 
-            {/* Loan dates if ASSIGNMENT */}
+            {/* ── Loan dates for ASSIGNMENT ── */}
             {isLoan && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
@@ -314,15 +415,15 @@ export function CreateBastDialog({ open, onOpenChange, onSuccess }: CreateBastDi
               </div>
             )}
 
-            {/* Notes */}
+            {/* ── Notes ── */}
             <div className="grid gap-2">
-              <Label>Keterangan / Catatan</Label>
-              <Textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} rows={3} placeholder="Tujuan peminjaman, kondisi khusus, dll." />
+              <Label>Keterangan / Catatan Tambahan</Label>
+              <Textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} rows={2} placeholder="Catatan tambahan, kondisi khusus, dll." />
             </div>
           </div>
         )}
 
-        {/* ── STEP 2 ── */}
+        {/* ── STEP 2: Select Assets ── */}
         {step === 2 && (
           <div className="grid gap-4 py-2">
             <div className="flex items-center justify-between">
@@ -335,7 +436,7 @@ export function CreateBastDialog({ open, onOpenChange, onSuccess }: CreateBastDi
             </div>
             <div className="border rounded-lg divide-y max-h-[420px] overflow-y-auto">
               {filteredAssets.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">{assets.length === 0 ? "Pilih tipe BAST terlebih dahulu untuk memuat daftar aset yang relevan." : "Tidak ada aset yang cocok dengan pencarian."}</div>
+                <div className="p-8 text-center text-muted-foreground">{assets.length === 0 ? "Tidak ada aset yang relevan untuk tipe BAST ini." : "Tidak ada aset yang cocok dengan pencarian."}</div>
               ) : (
                 filteredAssets.map((asset) => (
                   <div key={asset.id} className={`flex items-center gap-3 p-3 cursor-pointer transition-colors ${selectedAssets.includes(asset.id) ? "bg-primary/5" : "hover:bg-muted/50"}`} onClick={() => toggleAsset(asset.id)}>
