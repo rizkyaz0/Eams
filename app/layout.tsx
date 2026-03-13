@@ -19,6 +19,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "EAMS - Enterprise Asset Management System",
   description: "Sistem Manajemen Aset Perusahaan",
+  icons: {
+    icon: "/ikon.ico",
+    shortcut: "/ikon.ico",
+  },
 };
 
 export default function RootLayout({

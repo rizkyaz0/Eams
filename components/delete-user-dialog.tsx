@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface DeleteUserDialogProps {
   open: boolean;
@@ -15,7 +15,6 @@ interface DeleteUserDialogProps {
 
 export function DeleteUserDialog({ open, onOpenChange, onSuccess, user }: DeleteUserDialogProps) {
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
 
   const handleDelete = async () => {
     if (!user) return;
@@ -29,21 +28,14 @@ export function DeleteUserDialog({ open, onOpenChange, onSuccess, user }: Delete
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to delete user");
+        throw new Error(data.error || "Gagal menonaktifkan pengguna");
       }
 
-      toast({
-        title: "Success",
-        description: "User deleted successfully",
-      });
+      toast.success("Pengguna berhasil dinonaktifkan");
 
       onSuccess();
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -53,18 +45,18 @@ export function DeleteUserDialog({ open, onOpenChange, onSuccess, user }: Delete
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Delete User</DialogTitle>
+          <DialogTitle>Nonaktifkan Pengguna</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete user <span className="font-medium">{user?.fullName}</span>? This action cannot be undone.
+            Apakah Anda yakin ingin menonaktifkan pengguna <span className="font-medium text-foreground">{user?.fullName}</span>? Data pengguna tidak akan dihapus permanen dan dapat diaktifkan kembali nanti.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-            Cancel
+            Batal
           </Button>
           <Button variant="destructive" onClick={handleDelete} disabled={loading}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Delete
+            Nonaktifkan
           </Button>
         </DialogFooter>
       </DialogContent>

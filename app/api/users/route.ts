@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
           fullName: true,
           nip: true,
           role: true,
+          isActive: true,
           divisionId: true,
           division: {
             select: {

@@ -30,6 +30,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         fullName: true,
         nip: true,
         role: true,
+        isActive: true,
         division: true,
         createdAt: true,
         updatedAt: true,
@@ -87,12 +88,17 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const updateData: any = {};
 
     if (body.fullName) updateData.fullName = body.fullName;
-    if (body.nip) updateData.nip = body.nip;
+    if (body.nip !== undefined) updateData.nip = body.nip;
     if (body.divisionId !== undefined) updateData.divisionId = body.divisionId;
 
     // Only admins can change role
     if (body.role && hasMinimumRole(user.role, UserRole.ADMIN_INSTANSI)) {
       updateData.role = body.role;
+    }
+
+    // Only admins can activate/deactivate users
+    if (body.isActive !== undefined && hasMinimumRole(user.role, UserRole.ADMIN_INSTANSI)) {
+      updateData.isActive = body.isActive;
     }
 
     // If password is being changed
@@ -123,7 +129,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 }
 
 /**
- * DELETE /api/users/[id] - Delete user (Admin only)
+ * DELETE /api/users/[id] - Deactivate user (soft delete, Admin only)
  */
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
@@ -131,9 +137,9 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     return unauthorizedResponse();
   }
 
-  // Only admins can delete users
+  // Only admins can deactivate users
   if (!hasMinimumRole(user.role, UserRole.ADMIN_INSTANSI)) {
-    return forbiddenResponse("Only admins can delete users");
+    return forbiddenResponse("Only admins can deactivate users");
   }
 
   try {
@@ -148,19 +154,21 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return notFoundResponse("User not found");
     }
 
-    // Prevent self-deletion
+    // Prevent self-deactivation
     if (user.userId === id) {
-      return errorResponse("You cannot delete your own account", 403);
+      return errorResponse("Anda tidak dapat menonaktifkan akun sendiri", 403);
     }
 
-    // Delete user
-    await db.user.delete({
+    // Soft delete: set isActive = false instead of hard delete
+    const updatedUser = await db.user.update({
       where: { id },
+      data: { isActive: false },
+      select: { id: true, email: true, fullName: true, isActive: true },
     });
 
-    return successResponse(null, "User deleted successfully");
+    return successResponse(updatedUser, "User berhasil dinonaktifkan");
   } catch (error) {
-    console.error("Delete user error:", error);
-    return errorResponse("Failed to delete user", 500);
+    console.error("Deactivate user error:", error);
+    return errorResponse("Failed to deactivate user", 500);
   }
 }

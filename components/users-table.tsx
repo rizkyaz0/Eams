@@ -6,9 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Card } from "@/components/ui/card";
-import { MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { MoreHorizontal, Edit, UserX, UserCheck } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EditUserDialog } from "@/components/edit-user-dialog";
+import { toast } from "sonner";
 
 interface UsersTableProps {
   users: any[];
@@ -18,7 +19,7 @@ interface UsersTableProps {
   onPageChange: (page: number) => void;
   onRefresh: () => void;
   onDelete: (user: any) => void;
-  currentUserId?: string; // to disable self-edit/delete
+  currentUserId?: string;
 }
 
 const roleConfig = {
@@ -31,9 +32,32 @@ const roleConfig = {
 
 export function UsersTable({ users, loading, page, total, onPageChange, onRefresh, onDelete, currentUserId }: UsersTableProps) {
   const [editUser, setEditUser] = useState<any>(null);
+  const [reactivating, setReactivating] = useState<string | null>(null);
 
   const limit = 10;
   const totalPages = Math.ceil(total / limit);
+
+  const handleReactivate = async (userId: string) => {
+    setReactivating(userId);
+    try {
+      const res = await fetch(`/api/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: true }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("User berhasil diaktifkan kembali");
+        onRefresh();
+      } else {
+        toast.error(data.error || "Gagal mengaktifkan user");
+      }
+    } catch {
+      toast.error("Terjadi kesalahan");
+    } finally {
+      setReactivating(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -51,8 +75,8 @@ export function UsersTable({ users, loading, page, total, onPageChange, onRefres
     return (
       <Card className="p-12">
         <div className="text-center">
-          <p className="text-lg font-semibold">No users found</p>
-          <p className="text-sm text-muted-foreground mt-1">Try adjusting your filters or create a new user</p>
+          <p className="text-lg font-semibold">Tidak ada user ditemukan</p>
+          <p className="text-sm text-muted-foreground mt-1">Coba sesuaikan filter atau buat user baru</p>
         </div>
       </Card>
     );
@@ -65,20 +89,22 @@ export function UsersTable({ users, loading, page, total, onPageChange, onRefres
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Full Name</TableHead>
+                <TableHead>Nama Lengkap</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>NIP</TableHead>
                 <TableHead>Role</TableHead>
-                <TableHead>Division</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>Divisi</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {users.map((user) => {
                 const role = roleConfig[user.role as keyof typeof roleConfig] || { label: user.role, color: "" };
                 const isSelf = currentUserId === user.id;
+                const isInactive = user.isActive === false;
                 return (
-                  <TableRow key={user.id} className={isSelf ? "bg-muted/30" : ""}>
+                  <TableRow key={user.id} className={isInactive ? "opacity-60" : isSelf ? "bg-muted/30" : ""}>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
                         {user.fullName}
@@ -93,6 +119,17 @@ export function UsersTable({ users, loading, page, total, onPageChange, onRefres
                       </Badge>
                     </TableCell>
                     <TableCell>{user.division?.name || "-"}</TableCell>
+                    <TableCell>
+                      {isInactive ? (
+                        <Badge variant="outline" className="bg-red-100 text-red-700 border-red-300">
+                          Nonaktif
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+                          Aktif
+                        </Badge>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">
                       {isSelf ? (
                         <span className="text-xs text-muted-foreground italic pr-2">Akun aktif</span>
@@ -104,16 +141,27 @@ export function UsersTable({ users, loading, page, total, onPageChange, onRefres
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuLabel>Aksi</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => setEditUser(user)}>
                               <Edit className="mr-2 h-4 w-4" />
                               Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => onDelete(user)}>
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
+                            {isInactive ? (
+                              <DropdownMenuItem
+                                onClick={() => handleReactivate(user.id)}
+                                disabled={reactivating === user.id}
+                                className="text-green-600 focus:text-green-600"
+                              >
+                                <UserCheck className="mr-2 h-4 w-4" />
+                                {reactivating === user.id ? "Memproses..." : "Aktifkan Kembali"}
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => onDelete(user)}>
+                                <UserX className="mr-2 h-4 w-4" />
+                                Nonaktifkan
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       )}
@@ -128,20 +176,19 @@ export function UsersTable({ users, loading, page, total, onPageChange, onRefres
         {/* Pagination */}
         <div className="flex items-center justify-between px-6 py-4 border-t">
           <p className="text-sm text-muted-foreground">
-            Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} users
+            Menampilkan {(page - 1) * limit + 1}–{Math.min(page * limit, total)} dari {total} user
           </p>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => onPageChange(page - 1)} disabled={page === 1}>
-              Previous
+              Sebelumnya
             </Button>
             <Button variant="outline" size="sm" onClick={() => onPageChange(page + 1)} disabled={page >= totalPages}>
-              Next
+              Selanjutnya
             </Button>
           </div>
         </div>
       </Card>
 
-      {/* Edit Dialog */}
       {editUser && (
         <EditUserDialog
           open={!!editUser}

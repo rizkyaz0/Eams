@@ -4,6 +4,7 @@ import * as React from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { LayoutDashboard, Package, FileText, Users, Settings, Wrench, Building2, QrCode, Activity, BarChart3, CheckCircle2, ListChecks } from "lucide-react";
+import Image from "next/image";
 
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
@@ -137,9 +138,11 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:p-1.5!">
-                <Link href="/dashboard">
-                  <Building2 className="size-5!" />
-                  <span className="text-base font-semibold">EAMS</span>
+                <Link href="/dashboard" className="flex items-center gap-2">
+                  {/* Logo mode terang */}
+                  <Image src="/logo-gram-light.png" alt="EAMS" width={100} height={100} className="block dark:hidden rounded-md" />
+                  {/* Logo mode gelap */}
+                  <Image src="/logo-gram-dark.png" alt="EAMS" width={100} height={100} className="hidden dark:block rounded-md" />
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

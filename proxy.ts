@@ -29,6 +29,7 @@ const protectedRoutes = [
   "/api/stocktake",
   "/api/history",
   "/api/approvals",
+  "/api/settings",
 ];
 
 // Routes only accessible when NOT logged in

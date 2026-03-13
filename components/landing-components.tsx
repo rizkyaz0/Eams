@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 import { useRef } from "react";
 import { ArrowRight, ShieldCheck, Zap, BarChart3, Box, RotateCcw, Wrench, BrainCircuit, RadioTower, ClipboardCheck, TrendingUp, Building2, Github, CheckCircle2, ChevronRight } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -70,19 +71,19 @@ const stats = [
 
 const testimonials = [
   {
-    name: "Ahmad Fauzan",
+    name: "Suharta",
     role: "Kepala IT, Dinas Pendidikan Kota X",
     quote: "EAMS memotong waktu opname aset tahunan kami dari 3 minggu menjadi 2 hari. Luar biasa!",
     avatar: "AF",
   },
   {
-    name: "Siti Rahmawati",
+    name: "Daffa Ahmad",
     role: "Asset Manager, PT. Konstruksi Nusantara",
     quote: "Fitur prediksi AI-nya benar-benar menyelamatkan kami dari downtime mesin senilai ratusan juta rupiah.",
     avatar: "SR",
   },
   {
-    name: "Budi Santoso",
+    name: "Mubarok",
     role: "CTO, Startup Logistik",
     quote: "Deploy dalam hitungan menit, BAST digital menggantikan tumpukan kertas dan membuat audit menjadi mudah.",
     avatar: "BS",
@@ -97,7 +98,7 @@ export function LandingNav() {
     <nav className="fixed top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-          <Building2 className="size-5 text-primary" />
+          <Image src="/ikon.ico" alt="EAMS Logo" width={24} height={24} className="rounded-sm" />
           <span>EAMS</span>
           <Badge variant="outline" className="text-[10px] font-mono hidden sm:block">
             Enterprise
@@ -313,7 +314,7 @@ export function LandingFooter() {
         <div className="grid md:grid-cols-4 gap-8 mb-12">
           <div className="md:col-span-2">
             <div className="flex items-center gap-2 font-bold text-lg mb-3">
-              <Building2 className="size-5 text-primary" />
+              <Image src="/ikon.ico" alt="EAMS Logo" width={24} height={24} className="rounded-sm" />
               EAMS
             </div>
             <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">Platform Enterprise Asset Management System modern yang membantu organisasi mengelola aset secara cerdas dan efisien.</p>

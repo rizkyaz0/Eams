@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface EditUserDialogProps {
   open: boolean;
@@ -19,7 +19,6 @@ interface EditUserDialogProps {
 export function EditUserDialog({ open, onOpenChange, onSuccess, user }: EditUserDialogProps) {
   const [loading, setLoading] = useState(false);
   const [divisions, setDivisions] = useState<any[]>([]);
-  const { toast } = useToast();
 
   // Form state
   const [fullName, setFullName] = useState("");
@@ -49,7 +48,8 @@ export function EditUserDialog({ open, onOpenChange, onSuccess, user }: EditUser
       const response = await fetch("/api/divisions");
       const data = await response.json();
       if (data.success) {
-        setDivisions(data.data.divisions || []);
+        // API returns the array directly in data.data (not data.data.divisions)
+        setDivisions(Array.isArray(data.data) ? data.data : data.data.divisions || []);
       }
     } catch (error) {
       console.error("Failed to fetch divisions:", error);
@@ -65,7 +65,8 @@ export function EditUserDialog({ open, onOpenChange, onSuccess, user }: EditUser
         fullName,
         nip: nip || null,
         role,
-        divisionId: divisionId || null,
+        // "none" is a special sentinel value meaning "clear division"
+        divisionId: divisionId === "none" || divisionId === "" ? null : divisionId,
       };
 
       if (password) {
@@ -86,18 +87,10 @@ export function EditUserDialog({ open, onOpenChange, onSuccess, user }: EditUser
         throw new Error(data.error || "Failed to update user");
       }
 
-      toast({
-        title: "Success",
-        description: "User updated successfully",
-      });
-
+      toast.success("User berhasil diperbarui");
       onSuccess();
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Gagal memperbarui user");
     } finally {
       setLoading(false);
     }
@@ -145,12 +138,15 @@ export function EditUserDialog({ open, onOpenChange, onSuccess, user }: EditUser
                 </Select>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="division">Division</Label>
-                <Select value={divisionId} onValueChange={setDivisionId}>
+                <Label htmlFor="division">Divisi</Label>
+                <Select value={divisionId || "none"} onValueChange={setDivisionId}>
                   <SelectTrigger id="division">
-                    <SelectValue placeholder="Select division" />
+                    <SelectValue placeholder="Pilih divisi" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none">
+                      <span className="text-muted-foreground italic">— Tanpa Divisi —</span>
+                    </SelectItem>
                     {divisions.map((div) => (
                       <SelectItem key={div.id} value={div.id}>
                         {div.name}
