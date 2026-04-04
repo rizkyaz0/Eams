@@ -7,8 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Settings, Database, Trash2, RefreshCw, ShieldAlert, Info, CheckCircle } from "lucide-react";
+import { Settings, Database, Trash2, RefreshCw, ShieldAlert, Info, CheckCircle, Download, FileSpreadsheet, FileDown, FileText } from "lucide-react";
 import { toast } from "sonner";
+import { APP_CONFIG } from "@/lib/config";
 
 // Halaman settings hanya bisa diakses user yang sudah login.
 // Proteksi SUPER_ADMIN untuk aksi berbahaya dilakukan di API-nya.
@@ -65,12 +66,12 @@ export default function SettingsPage() {
           <CardContent className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Nama Aplikasi</span>
-              <span className="text-sm font-medium">EAMS</span>
+              <span className="text-sm font-medium">{APP_CONFIG.app.fullName}</span>
             </div>
             <Separator />
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Versi</span>
-              <Badge variant="outline">v1.0.0</Badge>
+              <Badge variant="outline">v{APP_CONFIG.app.version}</Badge>
             </div>
             <Separator />
             <div className="flex justify-between items-center">
@@ -86,6 +87,40 @@ export default function SettingsPage() {
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Autentikasi</span>
               <span className="text-sm font-medium">JWT + HttpOnly Cookie</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Informasi Instansi — Ditarik dari lib/config.ts */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Database className="h-5 w-5 text-indigo-500" />
+              <div>
+                <CardTitle className="text-base">Konfigurasi Instansi</CardTitle>
+                <CardDescription className="text-xs">Edit di: <code>lib/config.ts</code></CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Nama Instansi</span>
+              <span className="text-sm font-medium text-right max-w-[200px] truncate">{APP_CONFIG.instansi.nama}</span>
+            </div>
+            <Separator />
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Unit / Bagian</span>
+              <span className="text-sm font-medium">{APP_CONFIG.instansi.unit}</span>
+            </div>
+            <Separator />
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Kota</span>
+              <span className="text-sm font-medium">{APP_CONFIG.instansi.kota}</span>
+            </div>
+            <Separator />
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Alamat</span>
+              <span className="text-sm font-medium text-right max-w-[200px] truncate">{APP_CONFIG.instansi.alamat}</span>
             </div>
           </CardContent>
         </Card>
@@ -148,6 +183,53 @@ export default function SettingsPage() {
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Hash Algoritma</span>
               <span className="text-sm font-medium">bcrypt (12 rounds)</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Backup Data */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Download className="h-5 w-5 text-blue-600" />
+              <div>
+                <CardTitle className="text-base">Backup & Export Data</CardTitle>
+                <CardDescription>Unduh salinan data untuk keperluan backup atau audit.</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid sm:grid-cols-3 gap-3">
+              <div className="border rounded-lg p-4 space-y-3">
+                <div>
+                  <p className="font-semibold text-sm">Excel Multi-Sheet</p>
+                  <p className="text-xs text-muted-foreground mt-1">Semua data dalam satu file Excel dengan tab per tabel (User, Aset, Kategori, Lokasi, BAST).</p>
+                </div>
+                <Button variant="outline" size="sm" className="w-full" onClick={() => window.open("/api/settings/backup?format=excel", "_blank")}>
+                  <FileSpreadsheet className="size-4 mr-2 text-emerald-600" />
+                  Download Excel
+                </Button>
+              </div>
+              <div className="border rounded-lg p-4 space-y-3">
+                <div>
+                  <p className="font-semibold text-sm">CSV (ZIP)</p>
+                  <p className="text-xs text-muted-foreground mt-1">Data dalam format CSV terpisah per tabel, dikompres dalam satu file ZIP.</p>
+                </div>
+                <Button variant="outline" size="sm" className="w-full" onClick={() => window.open("/api/settings/backup?format=csv", "_blank")}>
+                  <FileDown className="size-4 mr-2 text-blue-600" />
+                  Download CSV (ZIP)
+                </Button>
+              </div>
+              <div className="border rounded-lg p-4 space-y-3">
+                <div>
+                  <p className="font-semibold text-sm">SQL Dump</p>
+                  <p className="text-xs text-muted-foreground mt-1">File SQL berisi INSERT statements yang bisa digunakan untuk restore ke PostgreSQL lain.</p>
+                </div>
+                <Button variant="outline" size="sm" className="w-full" onClick={() => window.open("/api/settings/backup?format=sql", "_blank")}>
+                  <FileText className="size-4 mr-2 text-orange-600" />
+                  Download SQL
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

@@ -15,14 +15,15 @@ export async function GET(request: NextRequest) {
 
   try {
     const categories = await db.category.findMany({
-      include: {
-        _count: {
-          select: { assets: true },
-        },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        description: true,
+        createdAt: true,
+        _count: { select: { assets: true } },
       },
-      orderBy: {
-        name: "asc",
-      },
+      orderBy: { name: "asc" },
     });
 
     return successResponse(categories);
@@ -43,26 +44,31 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { name } = body;
+    const { name, code, description } = body;
 
     if (!name) {
-      return errorResponse("Category name is required", 400);
+      return errorResponse("Nama kategori wajib diisi", 400);
     }
 
-    // Check if category already exists
-    const existingCategory = await db.category.findUnique({
-      where: { name },
-    });
+    // Check duplicate name
+    const existingName = await db.category.findUnique({ where: { name } });
+    if (existingName) {
+      return errorResponse("Kategori dengan nama ini sudah ada", 409);
+    }
 
-    if (existingCategory) {
-      return errorResponse("Category with this name already exists", 409);
+    // Check duplicate code if provided
+    if (code) {
+      const existingCode = await db.category.findUnique({ where: { code } });
+      if (existingCode) {
+        return errorResponse("Kode kategori sudah digunakan", 409);
+      }
     }
 
     const category = await db.category.create({
-      data: { name },
+      data: { name, code: code || null, description: description || null },
     });
 
-    return successResponse(category, "Category created successfully", 201);
+    return successResponse(category, "Kategori berhasil dibuat", 201);
   } catch (error) {
     console.error("Create category error:", error);
     return errorResponse("Failed to create category", 500);

@@ -1,120 +1,112 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
-import prisma from "@/lib/db";
-import { errorResponse, successResponse, unauthorizedResponse } from "@/lib/api-response";
-import { BastType, AssetStatus } from "@prisma/client";
+// app/api/bast/[id]/approve/route.ts
+import { NextRequest } from "next/server";
+import db from "@/lib/db";
+import { getCurrentUser, hasMinimumRole } from "@/lib/auth";
+import { successResponse, errorResponse, unauthorizedResponse, forbiddenResponse, notFoundResponse } from "@/lib/api-response";
+import { UserRole } from "@prisma/client";
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+/**
+ * POST /api/bast/[id]/approve
+ *
+ * Digunakan oleh User Serah atau User Terima untuk menyetujui BAST.
+ * Body: { pihak: "serah" | "terima" }
+ *
+ * Logika:
+ *  - Validasi user yang login adalah pihak yang sesuai
+ *  - Update statusSerah atau statusTerima → "APPROVED"
+ *  - Jika keduanya sudah APPROVED → set status BAST = "APPROVED" dan tandai approvedAt
+ */
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const user = await getCurrentUser();
   if (!user) return unauthorizedResponse();
 
   try {
     const { id } = await params;
+    const body = await request.json();
+    const { pihak } = body; // "serah" | "terima"
 
-    // Start transaction
-    const result = await prisma.$transaction(async (tx) => {
-      // 1. Get BAST and include related assets to check value
-      const bast = await tx.bast.findUnique({
-        where: { id },
-        include: {
-          details: {
-            include: {
-              asset: true,
-            },
-          },
-        },
-      });
+    if (!pihak || !["serah", "terima"].includes(pihak)) {
+      return errorResponse("Parameter 'pihak' harus 'serah' atau 'terima'", 400);
+    }
 
-      if (!bast) throw new Error("BAST not found");
-      if (bast.status !== "PENDING" && bast.status !== "PENDING_MGR") throw new Error("BAST is not in a pending review state");
-
-      // Multi-Tier Workflow Engine: Calculate threshold
-      const totalValue = bast.details.reduce((sum, d) => sum + Number(d.asset.purchasePrice || 0), 0);
-      const HIGH_VALUE_THRESHOLD = 20000000; // Rp 20.000.000
-
-      let targetStatus = "APPROVED";
-
-      if (bast.status === "PENDING" && totalValue > HIGH_VALUE_THRESHOLD) {
-        // If the user isn't high-ranking, push to Manager Queue
-        if (user.role !== "SUPER_ADMIN" && user.role !== "ADMIN_INSTANSI") {
-          targetStatus = "PENDING_MGR";
-        }
-      }
-
-      // Handle intermediate hierarchy step without triggering asset automations
-      if (targetStatus === "PENDING_MGR") {
-        const delegatedBast = await tx.bast.update({
-          where: { id },
-          data: {
-            status: "PENDING_MGR",
-            currentApprovalLevel: 2,
-          },
-        });
-        return { ...delegatedBast, message: "Persetujuan tahap 1 selesai. Menunggu persetujuan Manager (Aset > 20 Jt)." };
-      }
-
-      // 2. Full Approval - Update BAST target
-      const updatedBast = await tx.bast.update({
-        where: { id },
-        data: {
-          status: "APPROVED",
-          approvedAt: new Date(),
-          approverId: user.id || null,
-          approverName: user.fullName || null,
-        },
-      });
-
-      // 3. Update Assets based on Type & Additional Automation Actions
-      for (const detail of bast.details) {
-        let newStatus: AssetStatus = AssetStatus.AVAILABLE;
-        const updateData: any = {};
-
-        if (bast.type === BastType.ASSIGNMENT) {
-          newStatus = AssetStatus.IN_USE;
-          updateData.status = newStatus;
-          updateData.holderId = detail.targetHolderId; // Auto transfer holder
-        } else if (bast.type === BastType.RETURN) {
-          newStatus = AssetStatus.AVAILABLE;
-          updateData.status = newStatus;
-          updateData.holderId = null; // Auto un-hold
-        } else if (bast.type === BastType.MUTATION) {
-          // Normalnya Mutasi memindah lokasi saja, menjaga status awal atau menjadi AVAILABLE/IN_USE tergantung bisnis, kita samakan status lamanya.
-          newStatus = detail.conditionBefore ? AssetStatus.IN_USE : AssetStatus.AVAILABLE;
-          updateData.status = newStatus;
-          updateData.locationId = detail.targetLocationId; // Auto transfer location
-        } else if (bast.type === BastType.DISPOSAL) {
-          newStatus = AssetStatus.DISPOSED;
-          updateData.status = newStatus;
-          updateData.holderId = null; // Auto soft-delete
-        } else if (bast.type === BastType.MAINTENANCE_OUT) {
-          newStatus = AssetStatus.IN_MAINTENANCE;
-          updateData.status = newStatus;
-
-          // Auto create Maintenance log
-          await tx.maintenance.create({
-            data: {
-              assetId: detail.assetId,
-              description: detail.description || "Auto-generated maintenance ticket from BAST out.",
-              startDate: new Date(),
-              status: "IN_PROGRESS",
-            },
-          });
-        } else {
-          // Default fallback
-          updateData.status = newStatus;
-        }
-
-        await tx.asset.update({
-          where: { id: detail.assetId },
-          data: updateData,
-        });
-      }
-
-      return updatedBast;
+    // Ambil data BAST
+    const bast = await db.bast.findUnique({
+      where: { id },
+      include: {
+        userSerah: { select: { id: true, fullName: true } },
+        userTerima: { select: { id: true, fullName: true } },
+      },
     });
 
-    return successResponse(result);
-  } catch (error: any) {
-    return errorResponse(error.message || "Failed to approve BAST");
+    if (!bast) return notFoundResponse("BAST tidak ditemukan");
+
+    // Pastikan BAST masih bisa diapprove (status PENDING)
+    if (bast.status === "APPROVED") {
+      return errorResponse("BAST ini sudah disetujui oleh kedua pihak", 400);
+    }
+
+    if (bast.status === "DRAFT") {
+      return errorResponse("BAST masih dalam status Draft, belum bisa diapprove", 400);
+    }
+
+    // Validasi user adalah pihak yang sesuai
+    if (pihak === "serah") {
+      if (!bast.userSerahId) {
+        return errorResponse("BAST ini tidak memiliki User Serah yang ditentukan", 400);
+      }
+      if (bast.userSerahId !== user.userId) {
+        return forbiddenResponse("Anda bukan User Serah pada BAST ini");
+      }
+      if (bast.statusSerah === "APPROVED") {
+        return errorResponse("Anda sudah menyetujui BAST ini sebagai pihak penyerah", 400);
+      }
+    } else {
+      // pihak === "terima"
+      if (!bast.userTerimaId) {
+        return errorResponse("BAST ini tidak memiliki User Terima yang ditentukan", 400);
+      }
+      if (bast.userTerimaId !== user.userId) {
+        return forbiddenResponse("Anda bukan User Terima pada BAST ini");
+      }
+      if (bast.statusTerima === "APPROVED") {
+        return errorResponse("Anda sudah menyetujui BAST ini sebagai pihak penerima", 400);
+      }
+    }
+
+    // Hitung status baru setelah approve ini
+    const newStatusSerah  = pihak === "serah"  ? "APPROVED" : bast.statusSerah;
+    const newStatusTerima = pihak === "terima" ? "APPROVED" : bast.statusTerima;
+    const bothApproved = newStatusSerah === "APPROVED" && newStatusTerima === "APPROVED";
+
+    // Update BAST
+    const updated = await db.bast.update({
+      where: { id },
+      data: {
+        statusSerah:  newStatusSerah,
+        statusTerima: newStatusTerima,
+        // Jika kedua pihak sudah approved → set status BAST = APPROVED
+        ...(bothApproved && {
+          status:     "APPROVED",
+          approvedAt: new Date(),
+        }),
+      },
+      include: {
+        userSerah:  { select: { id: true, fullName: true, lembaga: true } },
+        userTerima: { select: { id: true, fullName: true, lembaga: true } },
+        creator:    { select: { id: true, fullName: true } },
+      },
+    });
+
+    const message = bothApproved
+      ? "BAST telah disetujui oleh kedua pihak"
+      : `Persetujuan sebagai pihak ${pihak === "serah" ? "penyerah" : "penerima"} berhasil`;
+
+    return successResponse(updated, message);
+  } catch (error) {
+    console.error("Approve BAST error:", error);
+    return errorResponse("Gagal memproses persetujuan BAST", 500);
   }
 }

@@ -21,6 +21,7 @@ model Division {
 
 model Location {
   id          String   @id @default(cuid())
+  code        String?  @unique  // kode_lokasi, contoh: LAB01, KLS02, GDG
   name        String
   address     String?
   description String?
@@ -30,17 +31,22 @@ model Location {
 }
 
 model Category {
-  id     String  @id @default(cuid())
-  name   String  @unique
-  assets Asset[]
+  id          String   @id @default(cuid())
+  code        String?  @unique  // kode_kategori, contoh: EL, FR, MBL
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  assets      Asset[]
 }
 
 model User {
   id            String     @id @default(cuid())
   email         String     @unique
+  username      String?    @unique  // untuk login username
   password      String
   fullName      String
   nip           String?    @unique
+  lembaga       String?              // unit/instansi asal, tampil di tanda tangan BAST
   role          UserRole   @default(EMPLOYEE)
   isActive      Boolean    @default(true)
   divisionId    String?
@@ -50,6 +56,8 @@ model User {
   auditLogs     AuditLog[]
   approvedBasts Bast[]     @relation("BastApprover")
   createdBasts  Bast[]     @relation("BastCreator")
+  bastSerah     Bast[]     @relation("BastSerah")   // BAST di mana user ini sebagai penyerah
+  bastTerima    Bast[]     @relation("BastTerima")  // BAST di mana user ini sebagai penerima
   division      Division?  @relation(fields: [divisionId], references: [id])
   stockTakes    StockTake[]
 }
@@ -92,27 +100,35 @@ model Asset {
 }
 
 model Bast {
-  id                 String       @id @default(cuid())
-  bastNumber         String       @unique
-  type               BastType
-  description        String?
-  fileUrl            String?
-  status             String       @default("DRAFT")
-  currentApprovalLevel Int?       @default(1)
-  effectiveDate      DateTime     @default(now())
-  recipientName      String?
-  recipientPosition  String?
-  approverName       String?
-  loanStartDate      DateTime?
-  loanEndDate        DateTime?
-  approvedAt         DateTime?
-  creatorId          String
-  approverId         String?
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
-  approver           User?        @relation("BastApprover", fields: [approverId], references: [id])
-  creator            User         @relation("BastCreator", fields: [creatorId], references: [id])
-  details            BastDetail[]
+  id                   String       @id @default(cuid())
+  bastNumber           String       @unique
+  type                 BastType
+  description          String?
+  fileUrl              String?
+  status               String       @default("DRAFT")  // DRAFT, PENDING, APPROVED
+  currentApprovalLevel Int?         @default(1)
+  effectiveDate        DateTime     @default(now())
+  // Legacy fields (kept for compatibility)
+  recipientName        String?
+  recipientPosition    String?
+  approverName         String?
+  loanStartDate        DateTime?
+  loanEndDate          DateTime?
+  approvedAt           DateTime?
+  // 2-Party Approval System (UKK requirement)
+  userSerahId          String?                        // FK: User penyerah
+  userTerimaId         String?                        // FK: User penerima
+  statusSerah          String       @default("MENUNGGU")  // MENUNGGU / APPROVED
+  statusTerima         String       @default("MENUNGGU")  // MENUNGGU / APPROVED
+  creatorId            String
+  approverId           String?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  approver             User?        @relation("BastApprover", fields: [approverId], references: [id])
+  creator              User         @relation("BastCreator", fields: [creatorId], references: [id])
+  userSerah            User?        @relation("BastSerah", fields: [userSerahId], references: [id])
+  userTerima           User?        @relation("BastTerima", fields: [userTerimaId], references: [id])
+  details              BastDetail[]
 }
 
 model BastDetail {

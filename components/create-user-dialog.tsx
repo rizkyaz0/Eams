@@ -21,18 +21,17 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
   const [showPassword, setShowPassword] = useState(false);
 
   // Form state
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [nip, setNip] = useState("");
-  const [role, setRole] = useState("EMPLOYEE");
+  const [fullName, setFullName]   = useState("");
+  const [username, setUsername]   = useState("");
+  const [email, setEmail]         = useState("");
+  const [lembaga, setLembaga]     = useState("");
+  const [password, setPassword]   = useState("");
+  const [nip, setNip]             = useState("");
+  const [role, setRole]           = useState("EMPLOYEE");
   const [divisionId, setDivisionId] = useState("");
 
-  // Fetch divisions
   useEffect(() => {
-    if (open) {
-      fetchDivisions();
-    }
+    if (open) fetchDivisions();
   }, [open]);
 
   const fetchDivisions = async () => {
@@ -40,7 +39,6 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
       const response = await fetch("/api/divisions");
       const data = await response.json();
       if (data.success) {
-        // API returns data directly as array, not data.divisions
         setDivisions(Array.isArray(data.data) ? data.data : []);
       }
     } catch (error) {
@@ -57,6 +55,11 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
     toast.success("Password digenerate! Salin sebelum menyimpan.");
   };
 
+  const resetForm = () => {
+    setFullName(""); setUsername(""); setEmail(""); setLembaga("");
+    setPassword(""); setNip(""); setRole("EMPLOYEE"); setDivisionId("");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -64,12 +67,12 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
     try {
       const response = await fetch("/api/users", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fullName,
+          username: username || null,
           email,
+          lembaga: lembaga || null,
           password,
           nip: nip || null,
           role,
@@ -80,19 +83,11 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to create user");
+        throw new Error(data.error || "Gagal membuat user");
       }
 
       toast.success("User berhasil dibuat!");
-
-      // Reset form
-      setFullName("");
-      setEmail("");
-      setPassword("");
-      setNip("");
-      setRole("EMPLOYEE");
-      setDivisionId("");
-
+      resetForm();
       onSuccess();
     } catch (error: any) {
       toast.error(error.message || "Gagal membuat user");
@@ -103,46 +98,70 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create New User</DialogTitle>
-            <DialogDescription>Add a new user to the system.</DialogDescription>
+            <DialogTitle>Tambah Pengguna Baru</DialogTitle>
+            <DialogDescription>Buat akun pengguna baru untuk sistem.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
+
+            {/* Nama Lengkap */}
             <div className="grid gap-2">
-              <Label htmlFor="fullName">Full Name</Label>
-              <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="John Doe" required />
+              <Label htmlFor="cu-fullName">Nama Lengkap *</Label>
+              <Input id="cu-fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Budi Santoso" required />
             </div>
+
+            {/* Username */}
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="john@example.com" required />
+              <Label htmlFor="cu-username">
+                Username * <span className="text-xs text-muted-foreground">(digunakan untuk login)</span>
+              </Label>
+              <Input id="cu-username" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s/g, "_"))} placeholder="budi_santoso" required />
             </div>
+
+            {/* Email */}
+            <div className="grid gap-2">
+              <Label htmlFor="cu-email">Email *</Label>
+              <Input id="cu-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="budi@instansi.go.id" required />
+            </div>
+
+            {/* Lembaga/Unit */}
+            <div className="grid gap-2">
+              <Label htmlFor="cu-lembaga">
+                Unit / Lembaga <span className="text-xs text-muted-foreground">(tampil di tanda tangan BAST)</span>
+              </Label>
+              <Input id="cu-lembaga" value={lembaga} onChange={(e) => setLembaga(e.target.value)} placeholder="Unit Logistik dan Aset" />
+            </div>
+
+            {/* Password */}
             <div className="grid gap-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password *</Label>
+                <Label htmlFor="cu-password">Password *</Label>
                 <Button type="button" variant="ghost" size="sm" className="h-6 text-xs text-muted-foreground" onClick={generateRandomPassword}>
                   <RefreshCw className="size-3 mr-1" /> Generate
                 </Button>
               </div>
               <div className="relative">
-                <Input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required className="pr-9" placeholder="Min. 8 karakter" />
+                <Input id="cu-password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required className="pr-9" placeholder="Min. 8 karakter" />
                 <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(!showPassword)}>
                   {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
               </div>
             </div>
+
+            {/* NIP */}
             <div className="grid gap-2">
-              <Label htmlFor="nip">NIP (Optional)</Label>
-              <Input id="nip" value={nip} onChange={(e) => setNip(e.target.value)} placeholder="Employee ID number" />
+              <Label htmlFor="cu-nip">NIP <span className="text-xs text-muted-foreground">(opsional)</span></Label>
+              <Input id="cu-nip" value={nip} onChange={(e) => setNip(e.target.value)} placeholder="198001012010011001" />
             </div>
+
             <div className="grid grid-cols-2 gap-4">
+              {/* Role */}
               <div className="grid gap-2">
-                <Label htmlFor="role">Role</Label>
+                <Label htmlFor="cu-role">Role</Label>
                 <Select value={role} onValueChange={setRole}>
-                  <SelectTrigger id="role">
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
+                  <SelectTrigger id="cu-role"><SelectValue placeholder="Pilih role" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="SUPER_ADMIN">Super Admin</SelectItem>
                     <SelectItem value="ADMIN_INSTANSI">Admin Instansi</SelectItem>
@@ -152,30 +171,28 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
                   </SelectContent>
                 </Select>
               </div>
+              {/* Divisi */}
               <div className="grid gap-2">
-                <Label htmlFor="division">Division</Label>
+                <Label htmlFor="cu-division">Divisi</Label>
                 <Select value={divisionId} onValueChange={setDivisionId}>
-                  <SelectTrigger id="division">
-                    <SelectValue placeholder="Select division" />
-                  </SelectTrigger>
+                  <SelectTrigger id="cu-division"><SelectValue placeholder="Pilih divisi" /></SelectTrigger>
                   <SelectContent>
                     {divisions.map((div) => (
-                      <SelectItem key={div.id} value={div.id}>
-                        {div.name}
-                      </SelectItem>
+                      <SelectItem key={div.id} value={div.id}>{div.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
           </div>
+
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-              Cancel
+            <Button type="button" variant="outline" onClick={() => { resetForm(); onOpenChange(false); }} disabled={loading}>
+              Batal
             </Button>
             <Button type="submit" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create User
+              Buat Pengguna
             </Button>
           </DialogFooter>
         </form>

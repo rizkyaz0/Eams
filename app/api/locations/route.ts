@@ -15,14 +15,16 @@ export async function GET(request: NextRequest) {
 
   try {
     const locations = await db.location.findMany({
-      include: {
-        _count: {
-          select: { assets: true },
-        },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        address: true,
+        description: true,
+        createdAt: true,
+        _count: { select: { assets: true } },
       },
-      orderBy: {
-        name: "asc",
-      },
+      orderBy: { name: "asc" },
     });
 
     return successResponse(locations);
@@ -43,21 +45,25 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { name, address, description } = body;
+    const { name, code, address, description } = body;
 
     if (!name) {
-      return errorResponse("Location name is required", 400);
+      return errorResponse("Nama lokasi wajib diisi", 400);
+    }
+
+    // Check duplicate code if provided
+    if (code) {
+      const existingCode = await db.location.findUnique({ where: { code } });
+      if (existingCode) {
+        return errorResponse("Kode lokasi sudah digunakan", 409);
+      }
     }
 
     const location = await db.location.create({
-      data: {
-        name,
-        address: address || null,
-        description: description || null,
-      },
+      data: { name, code: code || null, address: address || null, description: description || null },
     });
 
-    return successResponse(location, "Location created successfully", 201);
+    return successResponse(location, "Lokasi berhasil dibuat", 201);
   } catch (error) {
     console.error("Create location error:", error);
     return errorResponse("Failed to create location", 500);

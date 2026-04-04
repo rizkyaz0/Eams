@@ -48,26 +48,18 @@ export async function GET(request: NextRequest) {
         take: limit,
         include: {
           creator: {
-            select: {
-              id: true,
-              fullName: true,
-              email: true,
-              nip: true,
-            },
+            select: { id: true, fullName: true, email: true, nip: true },
           },
           approver: {
-            select: {
-              id: true,
-              fullName: true,
-              email: true,
-              nip: true,
-            },
+            select: { id: true, fullName: true, email: true, nip: true },
           },
-          _count: {
-            select: {
-              details: true,
-            },
+          userSerah: {
+            select: { id: true, fullName: true, lembaga: true },
           },
+          userTerima: {
+            select: { id: true, fullName: true, lembaga: true },
+          },
+          _count: { select: { details: true } },
         },
         orderBy: {
           createdAt: "desc",
@@ -102,7 +94,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { type, recipientName, recipientPosition, description, notes, items } = body;
+    const { type, recipientName, recipientPosition, description, notes, items, userSerahId, userTerimaId } = body;
     const bastDescription = description || notes || null; // Support both field names
 
     // Validation
@@ -144,6 +136,11 @@ export async function POST(request: NextRequest) {
           effectiveDate: new Date(),
           creatorId: user.userId,
           status: "PENDING",
+          // 2-party approval
+          userSerahId: userSerahId || null,
+          userTerimaId: userTerimaId || null,
+          statusSerah: userSerahId ? "MENUNGGU" : "APPROVED",
+          statusTerima: userTerimaId ? "MENUNGGU" : "APPROVED",
         },
       });
 

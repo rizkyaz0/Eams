@@ -41,7 +41,9 @@ const INITIAL_FORM = {
   type: "" as BastType | "",
   recipientName: "",
   recipientPosition: "",
-  recipientUserId: "",
+  recipientUserId: "",     // User penerima aset (legacy)
+  userSerahId: "",         // User Penyerah (approval pihak 1)
+  userTerimaId: "",        // User Penerima (approval pihak 2)
   targetLocationId: "",
   notes: "",
   loanStartDate: "",
@@ -172,6 +174,9 @@ export function CreateBastDialog({ open, onOpenChange, onSuccess }: CreateBastDi
           type: formData.type,
           recipientName,
           recipientPosition,
+          // 2-party approval (UKK requirement)
+          userSerahId: formData.userSerahId || undefined,
+          userTerimaId: formData.userTerimaId || formData.recipientUserId || undefined,
           description: notes || undefined,
           loanStartDate: isLoan && formData.loanStartDate ? new Date(formData.loanStartDate) : undefined,
           loanEndDate: isLoan && formData.loanEndDate ? new Date(formData.loanEndDate) : undefined,
@@ -420,8 +425,58 @@ export function CreateBastDialog({ open, onOpenChange, onSuccess }: CreateBastDi
               <Label>Keterangan / Catatan Tambahan</Label>
               <Textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} rows={2} placeholder="Catatan tambahan, kondisi khusus, dll." />
             </div>
+
+            {/* ── 2-Party Approval: Pilih User Serah & Terima ── */}
+            <div className="border rounded-xl p-4 bg-primary/5 grid gap-3">
+              <p className="text-sm font-semibold flex items-center gap-2">
+                <UserCheck className="size-4 text-primary" />
+                Pihak Persetujuan BAST (Serah Terima)
+              </p>
+              <p className="text-xs text-muted-foreground -mt-1">
+                BAST hanya bisa dicetak setelah kedua pihak menyetujui.
+              </p>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="grid gap-2">
+                  <Label className="text-xs">Yang Menyerahkan (User Serah) *</Label>
+                  <Select
+                    value={formData.userSerahId}
+                    onValueChange={(v) => setFormData({ ...formData, userSerahId: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih user penyerah..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {users.filter(u => u.isActive !== false).map((u) => (
+                        <SelectItem key={u.id} value={u.id}>
+                          {u.fullName} {u.lembaga ? `— ${u.lembaga}` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label className="text-xs">Yang Menerima (User Terima) *</Label>
+                  <Select
+                    value={formData.userTerimaId}
+                    onValueChange={(v) => setFormData({ ...formData, userTerimaId: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih user penerima..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {users.filter(u => u.isActive !== false).map((u) => (
+                        <SelectItem key={u.id} value={u.id}>
+                          {u.fullName} {u.lembaga ? `— ${u.lembaga}` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
           </div>
         )}
+
 
         {/* ── STEP 2: Select Assets ── */}
         {step === 2 && (

@@ -21,27 +21,27 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { email, password } = body;
+    const { username, password } = body;
 
     // Validation
-    if (!email || !password) {
-      return errorResponse("Email dan password wajib diisi", 400);
+    if (!username || !password) {
+      return errorResponse("Username dan password wajib diisi", 400);
     }
 
-    // Find user
-    const user = await db.user.findUnique({
-      where: { email },
+    // Find user by username
+    const user = await db.user.findFirst({
+      where: { username },
       include: { division: true },
     });
 
-    if (!user) {
-      return errorResponse("Email atau password salah", 401);
+    if (!user || !user.isActive) {
+      return errorResponse("Username atau password salah", 401);
     }
 
     // Verify password
     const isValidPassword = await verifyPassword(password, user.password);
     if (!isValidPassword) {
-      return errorResponse("Email atau password salah", 401);
+      return errorResponse("Username atau password salah", 401);
     }
 
     // ✅ Reset rate limit on successful login

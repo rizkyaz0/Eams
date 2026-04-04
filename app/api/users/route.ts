@@ -53,8 +53,10 @@ export async function GET(request: NextRequest) {
         select: {
           id: true,
           email: true,
+          username: true,
           fullName: true,
           nip: true,
+          lembaga: true,
           role: true,
           isActive: true,
           divisionId: true,
@@ -112,11 +114,11 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { email, password, fullName, nip, role, divisionId } = body;
+    const { email, password, fullName, nip, username, lembaga, role, divisionId } = body;
 
     // Validation
-    if (!email || !password || !fullName) {
-      return errorResponse("Email, password, and full name are required", 400);
+    if (!email || !password || !fullName || !username) {
+      return errorResponse("Email, password, nama lengkap, dan username wajib diisi", 400);
     }
 
     // Check if user already exists
@@ -128,8 +130,17 @@ export async function POST(request: NextRequest) {
       return errorResponse("User with this email already exists", 409);
     }
 
+    // Check if username already exists
+    if (username) {
+      const existingUsername = await db.user.findUnique({ where: { username } });
+      if (existingUsername) {
+        return errorResponse("Username sudah digunakan", 409);
+      }
+    }
+
     // Check NIP uniqueness if provided
     if (nip) {
+
       const existingNip = await db.user.findUnique({
         where: { nip },
       });
@@ -146,17 +157,21 @@ export async function POST(request: NextRequest) {
     const newUser = await db.user.create({
       data: {
         email,
+        username: username || null,
         password: hashedPassword,
         fullName,
         nip: nip || null,
+        lembaga: lembaga || null,
         role: (role as UserRole) || UserRole.EMPLOYEE,
         divisionId: divisionId || null,
       },
       select: {
         id: true,
         email: true,
+        username: true,
         fullName: true,
         nip: true,
+        lembaga: true,
         role: true,
         division: true,
         createdAt: true,
@@ -164,7 +179,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return successResponse(newUser, "User created successfully", 201);
+    return successResponse(newUser, "User berhasil dibuat", 201);
+
   } catch (error) {
     console.error("Create user error:", error);
     return errorResponse("Failed to create user", 500);

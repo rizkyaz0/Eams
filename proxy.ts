@@ -92,5 +92,6 @@ export async function proxy(request: NextRequest) {
 export default proxy;
 
 export const config = {
-  matcher: ["/((?!_next|favicon.ico|api/auth|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  matcher: ["/((?!_next|favicon.ico|api/auth|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
 };
+

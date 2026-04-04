@@ -20,22 +20,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       where: { id },
       include: {
         creator: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true,
-            nip: true,
-            division: true,
-          },
+          select: { id: true, fullName: true, email: true, nip: true, division: true },
         },
         approver: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true,
-            nip: true,
-            division: true,
-          },
+          select: { id: true, fullName: true, email: true, nip: true },
+        },
+        // Pihak approval 2 pihak (UKK requirement)
+        userSerah: {
+          select: { id: true, fullName: true, lembaga: true, nip: true, role: true },
+        },
+        userTerima: {
+          select: { id: true, fullName: true, lembaga: true, nip: true, role: true },
         },
         details: {
           include: {
@@ -44,11 +39,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                 category: true,
                 location: true,
                 holder: {
-                  select: {
-                    id: true,
-                    fullName: true,
-                    email: true,
-                  },
+                  select: { id: true, fullName: true, email: true },
                 },
               },
             },

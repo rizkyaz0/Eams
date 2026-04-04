@@ -1,21 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-
-const formSchema = z.object({
-  name: z.string().min(2, {
-    message: "Category name must be at least 2 characters.",
-  }),
-});
 
 interface CreateCategoryDialogProps {
   open: boolean;
@@ -25,72 +17,74 @@ interface CreateCategoryDialogProps {
 
 export function CreateCategoryDialog({ open, onOpenChange, onSuccess }: CreateCategoryDialogProps) {
   const [loading, setLoading] = useState(false);
+  const [name, setName]         = useState("");
+  const [code, setCode]         = useState("");
+  const [description, setDesc]  = useState("");
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-    },
-  });
+  const reset = () => { setName(""); setCode(""); setDesc(""); };
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
     try {
-      const response = await fetch("/api/categories", {
+      const res  = await fetch("/api/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify({ name, code: code.toUpperCase() || undefined, description: description || undefined }),
       });
-
-      const data = await response.json();
-
+      const data = await res.json();
       if (data.success) {
-        toast.success("Category created successfully");
-        form.reset();
+        toast.success("Kategori berhasil dibuat");
+        reset();
         onSuccess();
       } else {
-        toast.error(data.error || "Failed to create category");
+        toast.error(data.error || "Gagal membuat kategori");
       }
-    } catch (error) {
-      toast.error("An error occurred");
+    } catch {
+      toast.error("Terjadi kesalahan");
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); onOpenChange(v); }}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Create Category</DialogTitle>
-          <DialogDescription>Add a new asset category.</DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Electronics, Furniture, etc." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>Tambah Kategori</DialogTitle>
+            <DialogDescription>Tambah kategori aset baru.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="cat-name">Nama Kategori *</Label>
+              <Input id="cat-name" value={name} onChange={e => setName(e.target.value)} placeholder="Elektronik, Furnitur, Kendaraan..." required />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="cat-code">
+                Kode Kategori <span className="text-xs text-muted-foreground">(digunakan untuk QR Code barang, contoh: EL, FR, KB)</span>
+              </Label>
+              <Input
+                id="cat-code"
+                value={code}
+                onChange={e => setCode(e.target.value.toUpperCase().replace(/\s/g, ""))}
+                placeholder="EL"
+                maxLength={10}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="cat-desc">Deskripsi <span className="text-xs text-muted-foreground">(opsional)</span></Label>
+              <Textarea id="cat-desc" value={description} onChange={e => setDesc(e.target.value)} rows={2} placeholder="Deskripsi singkat kategori..." />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => { reset(); onOpenChange(false); }} disabled={loading}>Batal</Button>
+            <Button type="submit" disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Tambah Kategori
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

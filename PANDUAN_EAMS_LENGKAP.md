@@ -634,3 +634,282 @@ A: BAST adalah dokumen legal yang membuktikan perpindahan tanggung jawab atas su
 ---
 
 _Dokumen ini dibuat khusus untuk mempersiapkan UKK SMK RPL. Semangat! 🚀_
+
+---
+
+# BAGIAN 11: FITUR KHUSUS UKK 2026 — PANDUAN TEKNIS
+
+## 11.1 Login dengan Username (Bukan Email)
+
+**Lokasi kode:**
+- `app/api/auth/login/route.ts` — API backend
+- `components/login-form.tsx` — Form UI
+
+**Cara kerja:**
+```typescript
+// app/api/auth/login/route.ts
+const { username, password } = await request.json();
+
+// Cari user berdasarkan username, BUKAN email
+const user = await db.user.findUnique({
+  where: { username },
+});
+```
+
+**Yang berubah dari email-based:**
+- Input field `email` diganti `username`
+- Query Prisma menggunakan `where: { username }` bukan `where: { email }`
+- Field `username` di schema Prisma bersifat `@unique`
+
+---
+
+## 11.2 Sistem BAST 2 Pihak (Serah & Terima)
+
+### Konsep Alur
+
+```
+Admin Buat BAST
+       │
+       ▼
+Pilih User Serah + User Terima (saat buat BAST)
+       │
+       ▼
+BAST dibuat (status: PENDING)
+statusSerah = "MENUNGGU", statusTerima = "MENUNGGU"
+       │
+       ├──▶ User Serah login → buka /approvals → klik "Setujui sebagai Penyerah"
+       │         statusSerah = "APPROVED"
+       │
+       └──▶ User Terima login → buka /approvals → klik "Setujui sebagai Penerima"
+                 statusTerima = "APPROVED"
+                        │
+                        ▼
+              Kedua status APPROVED?
+                        │ Ya
+                        ▼
+              BAST status = "APPROVED"
+              Tombol Cetak/Export tersedia!
+```
+
+### Field Baru di Schema Prisma (prisma/schema.prisma)
+
+```prisma
+model Bast {
+  // ...field lama...
+
+  // Field baru untuk 2-party approval
+  userSerahId   String?
+  userTerimaId  String?
+  statusSerah   String    @default("MENUNGGU")
+  statusTerima  String    @default("MENUNGGU")
+
+  userSerah     User? @relation("BastSerah",  fields: [userSerahId],  references: [id])
+  userTerima    User? @relation("BastTerima", fields: [userTerimaId], references: [id])
+}
+```
+
+### File Kode Penting
+
+| File | Fungsi |
+|------|--------|
+| `app/api/bast/route.ts` POST | Simpan `userSerahId`, `userTerimaId` saat buat BAST |
+| `app/api/bast/[id]/approve/route.ts` | API persetujuan — cek pihak serah/terima, update status |
+| `app/(authenticated)/approvals/page.tsx` | Inbox approval — hanya tampil BAST yang relevan bagi user |
+| `app/(authenticated)/bast/[id]/page.tsx` | Detail BAST — tampil status tiap pihak + tombol approve |
+| `components/create-bast-dialog.tsx` | Form buat BAST — dropdown pilih userSerahId & userTerimaId |
+
+### Kode API Approve (app/api/bast/[id]/approve/route.ts)
+
+```typescript
+// POST /api/bast/[id]/approve
+// Body: { pihak: "serah" | "terima" }
+
+export async function POST(request, { params }) {
+  const user    = await getCurrentUser();
+  const { pihak } = await request.json();
+  const { id }  = await params;
+
+  const bast = await db.bast.findUnique({ where: { id } });
+
+  // Cek apakah user ini adalah pihak yang berhak
+  if (pihak === "serah" && bast.userSerahId !== user.userId) {
+    return errorResponse("Anda bukan pihak penyerah", 403);
+  }
+
+  // Update status pihak yang bersangkutan
+  const updateData = pihak === "serah"
+    ? { statusSerah: "APPROVED" }
+    : { statusTerima: "APPROVED" };
+
+  const updated = await db.bast.update({ where: { id }, data: updateData });
+
+  // Jika kedua pihak sudah approve → finalisasi BAST
+  if (updated.statusSerah === "APPROVED" && updated.statusTerima === "APPROVED") {
+    await db.bast.update({
+      where: { id },
+      data: { status: "APPROVED", approvedAt: new Date() },
+    });
+  }
+}
+```
+
+---
+
+## 11.3 Guard Cetak BAST (Hanya Jika Kedua Pihak Setuju)
+
+**Lokasi:** `app/(authenticated)/bast/[id]/page.tsx`
+
+```typescript
+// BAST hanya bisa dicetak/diexport jika:
+// 1. status BAST sendiri = "APPROVED"
+// 2. statusSerah = "APPROVED"
+// 3. statusTerima = "APPROVED"
+
+const canExport = bast.status === "APPROVED"
+               && bast.statusSerah === "APPROVED"
+               && bast.statusTerima === "APPROVED";
+
+// Tombol Print/Export hanya muncul jika canExport = true
+{canExport ? (
+  <Button onClick={() => window.open(`/api/bast/${bast.id}/export?format=pdf`)}>
+    Export PDF
+  </Button>
+) : (
+  <p>Cetak tersedia setelah kedua pihak menyetujui</p>
+)}
+```
+
+---
+
+## 11.4 Export PDF & Excel BAST
+
+**Lokasi:** `app/api/bast/[id]/export/route.ts`
+
+```
+GET /api/bast/[id]/export?format=pdf   → Download PDF surat resmi BAST
+GET /api/bast/[id]/export?format=excel → Download Excel detail BAST
+```
+
+**Library yang digunakan:**
+- `jspdf` + `jspdf-autotable` → Generate PDF
+- `xlsx` → Generate Excel
+
+**Isi PDF:**
+- Kop surat instansi (dari `lib/config.ts`)
+- Nomor BAST, tanggal, tipe
+- Tabel daftar barang
+- Kolom tanda tangan 2 pihak
+
+---
+
+## 11.5 Laporan Inventaris
+
+**Lokasi:** `app/api/reports/inventaris/export/route.ts`
+
+```
+GET /api/reports/inventaris/export?format=pdf   → Laporan inventaris PDF
+GET /api/reports/inventaris/export?format=excel → Laporan inventaris Excel (3 sheet)
+```
+
+**Tombol ada di:** `app/(authenticated)/reports/page.tsx` — bagian "Laporan Inventaris"
+
+**Excel berisi 3 sheet:**
+1. **Ringkasan** — total aset & ringkasan per-status
+2. **Data Lengkap** — semua kolom aset dengan filter
+3. **Per Kategori** — jumlah & nilai aset per kategori
+
+---
+
+## 11.6 Backup Data
+
+**Lokasi:** `app/api/settings/backup/route.ts`
+
+```
+GET /api/settings/backup?format=excel → Backup Excel (5 sheets: User, Aset, Kat, Lok, BAST)
+GET /api/settings/backup?format=csv   → Backup ZIP berisi file CSV per tabel
+GET /api/settings/backup?format=sql   → Backup SQL INSERT statements
+```
+
+**Tombol ada di:** `app/(authenticated)/settings/page.tsx` — section "Backup & Export Data"
+
+---
+
+## 11.7 Konfigurasi Nama Instansi (lib/config.ts)
+
+```typescript
+// lib/config.ts — UBAH DI SINI sebelum ujian/demo!
+
+export const APP_CONFIG = {
+  instansi: {
+    nama:   "SMKN 1 Contoh Kota",          // Tampil di kop surat
+    unit:   "Bagian Tata Usaha",             // Sub-unit
+    alamat: "Jl. Pendidikan No. 1, Kota X", // Alamat
+    kota:   "Kota X",                        // Kota (untuk tanda tangan)
+    telp:   "0800-123-456",
+    email:  "admin@smkn1contoh.sch.id",
+  },
+  app: {
+    name:     "EAMS",
+    fullName: "Enterprise Asset Management System",
+    version:  "2.0.0",
+  },
+};
+```
+
+**Digunakan di:**
+- Kop surat PDF BAST
+- Kop surat laporan inventaris PDF
+- Halaman Settings (untuk tampil info instansi)
+
+---
+
+## 11.8 Kode Kategori & Lokasi (untuk QR Code Aset)
+
+**Database field:** `Category.code` dan `Location.code`
+
+**Contoh pengisian:**
+| Kategori | Kode |
+|----------|------|
+| Elektronik | EL |
+| Furnitur | FR |
+| Kendaraan | KN |
+
+**Used for:** Membentuk `tagNumber` aset secara terstruktur
+**Bisa diisi di:** Halaman `/categories` dan `/locations`
+
+---
+
+## 11.9 Ringkasan Lokasi File untuk Ujian
+
+```
+📁 AUTENTIKASI
+├── app/api/auth/login/route.ts       ← Login dengan username
+├── components/login-form.tsx         ← Form login UI
+└── proxy.ts                          ← Middleware cek sesi
+
+📁 BAST WORKFLOW
+├── app/api/bast/route.ts             ← Buat & list BAST
+├── app/api/bast/[id]/route.ts        ← Get detail BAST
+├── app/api/bast/[id]/approve/route.ts ← API persetujuan 2 pihak
+├── app/api/bast/[id]/export/route.ts  ← Export PDF & Excel BAST
+├── app/(authenticated)/bast/page.tsx  ← Halaman list BAST
+├── app/(authenticated)/bast/[id]/page.tsx ← Detail BAST + tombol approve
+├── app/(authenticated)/approvals/page.tsx ← Inbox persetujuan
+└── components/create-bast-dialog.tsx  ← Form buat BAST
+
+📁 LAPORAN
+├── app/api/reports/inventaris/export/route.ts ← Laporan inventaris
+├── app/api/reports/export/route.ts            ← Laporan analytics
+└── app/(authenticated)/reports/page.tsx       ← Halaman laporan
+
+📁 BACKUP & SETTINGS
+├── app/api/settings/backup/route.ts   ← Backup CSV/Excel/SQL
+└── app/(authenticated)/settings/page.tsx ← Halaman pengaturan
+
+📁 KONFIGURASI
+└── lib/config.ts                      ← Nama instansi, versi app
+```
+
+---
+
+_Dokumen ini dibuat khusus untuk mempersiapkan UKK SMK RPL. Semangat! 🚀_

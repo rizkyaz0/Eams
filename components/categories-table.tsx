@@ -13,7 +13,9 @@ import { useRouter } from "next/navigation";
 
 interface Category {
   id: string;
+  code?: string | null;
   name: string;
+  description?: string | null;
   _count?: {
     assets: number;
   };
@@ -70,22 +72,32 @@ export function CategoriesTable({ data }: CategoriesTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead className="text-center">Total Assets</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="w-20">Kode</TableHead>
+              <TableHead>Nama Kategori</TableHead>
+              <TableHead>Deskripsi</TableHead>
+              <TableHead className="text-center">Jumlah Aset</TableHead>
+              <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {!mounted || filteredData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={3} className="h-24 text-center">
-                  {!mounted ? "Loading..." : "No results."}
+                <TableCell colSpan={5} className="h-24 text-center">
+                  {!mounted ? "Memuat..." : "Tidak ada data."}
                 </TableCell>
               </TableRow>
             ) : (
               filteredData.map((category) => (
                 <TableRow key={category.id}>
+                  <TableCell>
+                    {category.code ? (
+                      <code className="bg-muted px-2 py-0.5 rounded text-xs font-mono font-bold">{category.code}</code>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">—</span>
+                    )}
+                  </TableCell>
                   <TableCell className="font-medium">{category.name}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{category.description || "—"}</TableCell>
                   <TableCell className="text-center">{category._count?.assets || 0}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
