@@ -38,10 +38,9 @@ export async function GET(request: NextRequest) {
     });
 
     // Ambil statistik ringkasan
-    const [totalAset, byStatus, byCategory] = await Promise.all([
+    const [totalAset, byStatus] = await Promise.all([
       db.asset.count({ where: { ...(categoryId && { categoryId }) } }),
       db.asset.groupBy({ by: ["status"], _count: { id: true } }),
-      db.asset.groupBy({ by: ["categoryId"], _count: { id: true }, include: { category: true } as any }),
     ]);
 
     if (format === "pdf") {
