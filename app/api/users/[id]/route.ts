@@ -87,8 +87,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     // Prepare update data
     const updateData: any = {};
 
-    if (body.fullName) updateData.fullName = body.fullName;
-    if (body.nip !== undefined) updateData.nip = body.nip;
+    if (body.fullName)             updateData.fullName  = body.fullName;
+    if (body.username !== undefined) updateData.username = body.username || null;
+    if (body.lembaga  !== undefined) updateData.lembaga  = body.lembaga  || null;
+    if (body.nip      !== undefined) updateData.nip      = body.nip;
     if (body.divisionId !== undefined) updateData.divisionId = body.divisionId;
 
     // Only admins can change role
@@ -113,9 +115,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       select: {
         id: true,
         email: true,
+        username: true,
         fullName: true,
         nip: true,
+        lembaga: true,
         role: true,
+        isActive: true,
         division: true,
         updatedAt: true,
       },
