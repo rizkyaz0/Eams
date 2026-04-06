@@ -37,6 +37,7 @@ const typeLabel: Record<string, string> = {
 export function RecentBast({ data }: RecentBastProps) {
   if (!data || data.length === 0) {
     return (
+      // Margin dikembalikan ke sini
       <Card className="mx-4 lg:mx-6">
         <CardHeader>
           <CardTitle>Recent BAST</CardTitle>
@@ -47,16 +48,17 @@ export function RecentBast({ data }: RecentBastProps) {
   }
 
   return (
+    // Margin dikembalikan ke sini
     <Card className="mx-4 lg:mx-6">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
             <CardTitle>Transaksi BAST Terbaru</CardTitle>
             <CardDescription>5 transaksi aset terakhir di sistem</CardDescription>
           </div>
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="outline" size="sm" className="w-full sm:w-auto" asChild>
             <Link href="/bast">
-              Lihat Semua <ArrowRight className="ml-2 size-3" />
+              Lihat Semua <ArrowRight className="ml-2 size-4" />
             </Link>
           </Button>
         </div>
@@ -69,19 +71,21 @@ export function RecentBast({ data }: RecentBastProps) {
 
             return (
               <div key={bast.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
-                <div className="flex items-start gap-4 flex-1">
-                  <div className={`p-2 rounded-lg bg-muted ${status?.color}`}>
+                <div className="flex items-start gap-4 flex-1 overflow-hidden">
+                  <div className={`p-2 rounded-lg bg-muted shrink-0 ${status?.color}`}>
                     <Icon className="size-5" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-semibold text-sm">{bast.bastNumber}</p>
-                      <Badge variant={status?.variant || "outline"}>{status?.label || bast.status}</Badge>
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <p className="font-semibold text-sm truncate max-w-[200px] sm:max-w-none">{bast.bastNumber}</p>
+                      <Badge variant={status?.variant || "outline"} className="shrink-0">
+                        {status?.label || bast.status}
+                      </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground truncate">
                       {typeLabel[bast.type as keyof typeof typeLabel] || bast.type} • {bast.assetCount} asset(s)
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-muted-foreground mt-1 truncate">
                       by {bast.creatorName} •{" "}
                       {new Date(bast.createdAt).toLocaleDateString("id-ID", {
                         day: "numeric",

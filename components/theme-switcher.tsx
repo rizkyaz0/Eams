@@ -4,9 +4,15 @@ import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Palette, Moon, Sun } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export function ThemeSwitcher() {
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const toggleMode = () => {
     const nextTheme = theme === "dark" ? "light" : "dark";
@@ -21,6 +27,15 @@ export function ThemeSwitcher() {
     }
     localStorage.setItem("app-accent", color);
   };
+
+  if (!mounted) {
+    return (
+      <Button variant="ghost" size="icon" className="h-8 w-8">
+        <Palette className="h-4 w-4" />
+        <span className="sr-only">Toggle theme</span>
+      </Button>
+    );
+  }
 
   return (
     <DropdownMenu>

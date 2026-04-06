@@ -95,38 +95,32 @@ const testimonials = [
  * ------------------------------------------------------------------ */
 export function LandingNav() {
   return (
-    <nav className="fixed top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-          <Image src="/ikon.ico" alt="EAMS Logo" width={24} height={24} className="rounded-sm" />
-          <span>EAMS</span>
-          <Badge variant="outline" className="text-[10px] font-mono hidden sm:block">
-            Enterprise
-          </Badge>
+    <div className="fixed top-0 left-0 right-0 z-50 flex justify-center p-4">
+      <nav className="flex items-center gap-2 md:gap-8 px-4 md:px-6 h-12 md:h-14 rounded-full border border-border/40 bg-background/60 backdrop-blur-xl shadow-2xl transition-all duration-300 hover:bg-background/80 hover:border-primary/20">
+        <Link href="/" className="flex items-center gap-2 font-bold text-sm md:text-base shrink-0">
+          <Image src="/ikon.ico" alt="EAMS Logo" width={22} height={22} className="rounded-sm" />
+          <span className="hidden xs:block">EAMS</span>
         </Link>
-        <div className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
-          <a href="#features" className="hover:text-foreground transition-colors">
-            Fitur
-          </a>
-          <a href="#stats" className="hover:text-foreground transition-colors">
-            Statistik
-          </a>
-          <a href="#testimonials" className="hover:text-foreground transition-colors">
-            Testimoni
-          </a>
+
+        <div className="hidden md:flex items-center gap-6 text-xs lg:text-sm font-medium text-muted-foreground">
+          <a href="#features" className="hover:text-foreground transition-colors">Fitur</a>
+          <a href="#stats" className="hover:text-foreground transition-colors">Statistik</a>
+          <a href="#testimonials" className="hover:text-foreground transition-colors">Testimoni</a>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" asChild>
+
+        <div className="flex items-center gap-2 md:gap-3 shrink-0">
+          <Button variant="ghost" size="sm" className="h-8 md:h-9 text-xs md:text-sm rounded-full hidden sm:flex" asChild>
             <Link href="/login">Masuk</Link>
           </Button>
-          <Button size="sm" asChild>
-            <Link href="/dashboard">
-              Mulai Sekarang <ChevronRight className="size-4 ml-1" />
+          <Button size="sm" className="h-8 md:h-9 text-xs md:text-sm rounded-full bg-primary text-primary-foreground hover:opacity-90" asChild>
+            <Link href="/dashboard" className="flex items-center">
+              Mulai <span className="hidden lg:inline ml-1 font-normal">Sekarang</span>
+              <ChevronRight className="size-3 md:size-4 ml-1" />
             </Link>
           </Button>
         </div>
-      </div>
-    </nav>
+      </nav>
+    </div>
   );
 }
 
@@ -281,22 +275,22 @@ export function LandingCTA() {
           initial={{ opacity: 0, scale: 0.98 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="relative rounded-3xl overflow-hidden bg-linear-to-br from-primary/90 to-blue-600 p-12 md:p-20 text-white text-center shadow-2xl"
+          className="relative rounded-3xl overflow-hidden bg-linear-to-br from-blue-700 to-indigo-900 dark:from-blue-900 dark:to-indigo-950 p-12 md:p-20 text-white text-center shadow-2xl border border-white/10"
         >
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.15),transparent)]" />
-          <h2 className="text-3xl md:text-5xl font-extrabold mb-4 relative z-10">Mulai Kelola Aset Anda Hari Ini</h2>
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.1),transparent)]" />
+          <h2 className="text-3xl md:text-5xl font-extrabold mb-4 relative z-10 text-white drop-shadow-sm">Mulai Kelola Aset Anda Hari Ini</h2>
           <p className="text-white/80 text-lg mb-10 max-w-xl mx-auto relative z-10">Bergabunglah dengan ribuan organisasi yang telah mempercayakan pengelolaan aset mereka kepada EAMS.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
-            <Button size="lg" variant="secondary" className="h-14 px-10 text-base bg-white text-primary hover:bg-white/90" asChild>
+            <Button size="lg" variant="secondary" className="h-14 px-10 text-base bg-white text-blue-950 font-semibold hover:bg-white/90 shadow-xl" asChild>
               <Link href="/dashboard">
                 Buka Dashboard <ArrowRight className="ml-2 size-5" />
               </Link>
             </Button>
           </div>
-          <div className="mt-8 flex flex-wrap justify-center gap-4 text-sm text-white/70 relative z-10">
+          <div className="mt-8 flex flex-wrap justify-center gap-4 text-sm text-white/70 relative z-10 font-medium">
             {["Tidak perlu kartu kredit", "Setup dalam 5 menit", "Data tersimpan aman"].map((t, i) => (
               <div key={i} className="flex items-center gap-1.5">
-                <CheckCircle2 className="size-4 text-emerald-300" />
+                <CheckCircle2 className="size-4 text-emerald-400" />
                 <span>{t}</span>
               </div>
             ))}

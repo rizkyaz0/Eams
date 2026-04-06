@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { FileDown, FileSpreadsheet } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, CartesianGrid } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#a855f7", "#ec4899"];
+// Palet warna standar yang akan digunakan jika tidak menggunakan tema khusus
+const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))", "hsl(var(--primary))"];
 
 export default function ReportsPage() {
   const [data, setData] = useState<any>(null);
@@ -30,7 +32,7 @@ export default function ReportsPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 lg:p-10">
+      <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 lg:p-10 w-full max-w-7xl mx-auto">
         <div>
           <Skeleton className="h-10 w-64 mb-2" />
           <Skeleton className="h-4 w-96" />
@@ -44,10 +46,30 @@ export default function ReportsPage() {
     );
   }
 
-  if (!data) return <div className="p-10 text-center">Data not available</div>;
+  if (!data) return <div className="p-10 text-center text-muted-foreground">Data not available</div>;
+
+  // Konfigurasi dinamis untuk ChartContainer shadcn
+  const statusConfig = data.statusData.reduce((acc: any, item: any, i: number) => {
+    acc[item.name] = { label: item.name, color: COLORS[i % COLORS.length] };
+    return acc;
+  }, {});
+
+  const conditionConfig = data.conditionData.reduce((acc: any, item: any, i: number) => {
+    acc[item.name] = { label: item.name, color: COLORS[(i + 2) % COLORS.length] };
+    return acc;
+  }, {});
+
+  const categoryConfig = data.categoryData.reduce(
+    (acc: any, item: any, i: number) => {
+      acc[item.name] = { label: item.name, color: COLORS[i % COLORS.length] };
+      return acc;
+    },
+    { value: { label: "Total Asset" } },
+  );
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6 lg:p-10 w-full max-w-7xl mx-auto">
+      {/* Header & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Laporan & Analitik</h1>
@@ -83,6 +105,7 @@ export default function ReportsPage() {
         </div>
       </div>
 
+      {/* Overview Cards */}
       <div className="grid gap-6 md:grid-cols-3 mb-4">
         <Card className="bg-primary/5 border-primary/20">
           <CardContent className="p-6">
@@ -95,68 +118,87 @@ export default function ReportsPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Status Distribution */}
-        <Card>
-          <CardHeader>
+        {/* Status Distribution (Donut Chart) */}
+        <Card className="flex flex-col">
+          <CardHeader className="items-center pb-0 text-center">
             <CardTitle>Distribusi Status Aset</CardTitle>
-            <CardDescription>Rasio kepemilikan aset yang sedang difungsikan maupun di gudang</CardDescription>
+            <CardDescription>Rasio kepemilikan aset yang difungsikan maupun di gudang</CardDescription>
           </CardHeader>
-          <CardContent className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
+          <CardContent className="flex-1 pb-0">
+            <ChartContainer config={statusConfig} className="mx-auto aspect-square max-h-[300px]">
               <PieChart>
-                <Pie data={data.statusData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value" nameKey="name" label>
+                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                <Pie
+                  data={data.statusData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  strokeWidth={5} // Memberi jarak visual (gap) antar potongan
+                  paddingAngle={2}
+                  dataKey="value"
+                  nameKey="name"
+                  // Prop 'label' dihapus agar pie chart terlihat minimalis khas shadcn
+                >
                   {data.statusData.map((entry: any, index: number) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={`var(--color-${entry.name})`} />
                   ))}
                 </Pie>
-                <Tooltip />
-                <Legend />
+                <ChartLegend content={<ChartLegendContent nameKey="name" />} className="-translate-y-2 flex-wrap gap-2" />
               </PieChart>
-            </ResponsiveContainer>
+            </ChartContainer>
           </CardContent>
         </Card>
 
-        {/* Condition Distribution */}
-        <Card>
-          <CardHeader>
+        {/* Condition Distribution (Pie Chart) */}
+        <Card className="flex flex-col">
+          <CardHeader className="items-center pb-0 text-center">
             <CardTitle>Kondisi Aset Saat Ini</CardTitle>
             <CardDescription>Visualisasi tingkat kelayakan aset perusahaan</CardDescription>
           </CardHeader>
-          <CardContent className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
+          <CardContent className="flex-1 pb-0">
+            <ChartContainer config={conditionConfig} className="mx-auto aspect-square max-h-[300px]">
               <PieChart>
-                <Pie data={data.conditionData} cx="50%" cy="50%" outerRadius={100} dataKey="value" nameKey="name" label>
+                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                <Pie
+                  data={data.conditionData}
+                  cx="50%"
+                  cy="50%"
+                  strokeWidth={2}
+                  dataKey="value"
+                  nameKey="name"
+                  // Prop 'label' dihapus agar pie chart terlihat minimalis khas shadcn
+                >
                   {data.conditionData.map((entry: any, index: number) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={`var(--color-${entry.name})`} />
                   ))}
                 </Pie>
-                <Tooltip />
-                <Legend />
+                <ChartLegend content={<ChartLegendContent nameKey="name" />} className="-translate-y-2 flex-wrap gap-2" />
               </PieChart>
-            </ResponsiveContainer>
+            </ChartContainer>
           </CardContent>
         </Card>
 
-        {/* Top Categories */}
+        {/* Top Categories (Bar Chart) */}
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle>Top 5 Kategori Aset Terbanyak</CardTitle>
             <CardDescription>Rasio kategori terpadat saat ini</CardDescription>
           </CardHeader>
-          <CardContent className="h-[350px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.categoryData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="name" />
-                <YAxis allowDecimals={false} />
-                <Tooltip cursor={{ fill: "transparent" }} />
-                <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]}>
+          <CardContent>
+            <ChartContainer config={categoryConfig} className="aspect-auto h-[350px] w-full">
+              <BarChart accessibilityLayer data={data.categoryData}>
+                {/* Hapus YAxis agar minimalis, hilangkan garis vertikal di background */}
+                <CartesianGrid vertical={false} />
+                <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={10} />
+                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                {/* Gunakan radius=8 agar ujung bar melengkung sesuai style shadcn */}
+                <Bar dataKey="value" radius={8}>
                   {data.categoryData.map((entry: any, index: number) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={`var(--color-${entry.name})`} />
                   ))}
                 </Bar>
               </BarChart>
-            </ResponsiveContainer>
+            </ChartContainer>
           </CardContent>
         </Card>
       </div>

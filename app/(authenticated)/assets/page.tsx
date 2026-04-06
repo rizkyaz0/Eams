@@ -118,21 +118,24 @@ export default function AssetsPage() {
   return (
     <>
       <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
-        <div className="flex items-center justify-between">
+        {/* Header diubah menjadi flex-col di mobile, sejajar di sm ke atas */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Assets</h1>
             <p className="text-muted-foreground">Manage your organization's assets</p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleExport}>
+          {/* flex-wrap ditambahkan agar tombol turun baris dengan rapi */}
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={handleExport} className="flex-1 sm:flex-none">
               <Download className="mr-2 size-4" />
               Export
             </Button>
-            <Button variant="outline" onClick={() => setScannerOpen(true)}>
+            <Button variant="outline" onClick={() => setScannerOpen(true)} className="flex-1 sm:flex-none">
               <QrCode className="mr-2 size-4" />
               Scan Asset
             </Button>
-            <Button onClick={() => setCreateDialogOpen(true)}>
+            {/* Tombol utama Add Asset akan memenuhi 1 baris penuh di mobile, tapi menyesuaikan konten di desktop */}
+            <Button onClick={() => setCreateDialogOpen(true)} className="w-full sm:w-auto">
               <Plus className="mr-2 size-4" />
               Add Asset
             </Button>
@@ -176,7 +179,8 @@ export default function AssetsPage() {
                   </Select>
                 </>
               ) : (
-                <div className="flex gap-2">
+                // Skeleton loading juga disesuaikan menjadi flex-col di mobile agar tidak terpotong layarnya
+                <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
                   <div className="h-10 w-full md:w-[180px] bg-muted animate-pulse rounded-md" />
                   <div className="h-10 w-full md:w-[180px] bg-muted animate-pulse rounded-md" />
                 </div>

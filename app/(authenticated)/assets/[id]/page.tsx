@@ -7,12 +7,32 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Edit, Trash2, QrCode, Printer, Image as ImageIcon, Camera, Loader2 } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
+import { LineChart, Line, XAxis, CartesianGrid } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { EditAssetDialog } from "@/components/edit-asset-dialog";
 import { DeleteAssetDialog } from "@/components/delete-asset-dialog";
 import { toast } from "sonner";
 import { AssetLabel } from "@/components/asset-label";
-import { Label } from "@/components/ui/label";
+
+const chartConfig = {
+  bookValue: {
+    label: "Book Value",
+    color: "hsl(var(--primary))",
+  },
+};
+
+// HELPER FUNCTION: Untuk memformat angka/string menjadi format standar Rupiah Indonesia
+const formatRupiah = (value: number | string | undefined | null) => {
+  if (value === undefined || value === null) return "-";
+  const num = Number(value);
+  if (isNaN(num)) return "-";
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(num);
+};
 
 export default function AssetDetailPage() {
   const params = useParams();
@@ -163,7 +183,7 @@ export default function AssetDetailPage() {
     <>
       <div className="flex flex-1 flex-col gap-4 p-4 md:p-6 print:hidden">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Button variant="outline" size="icon" onClick={() => router.push("/assets")}>
               <ArrowLeft className="size-4" />
@@ -173,7 +193,7 @@ export default function AssetDetailPage() {
               <p className="text-muted-foreground">Tag: {asset.tagNumber}</p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {asset.status === "IN_USE" && (
               <Button onClick={handleReturnAction} disabled={returning} className="bg-green-600 hover:bg-green-700">
                 {returning ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
@@ -279,7 +299,8 @@ export default function AssetDetailPage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Purchase Price</p>
-                  <p className="mt-1">{asset.purchasePrice ? `Rp ${asset.purchasePrice.toLocaleString("id-ID")}` : "-"}</p>
+                  {/* Memanggil helper formatRupiah */}
+                  <p className="mt-1 font-medium">{formatRupiah(asset.purchasePrice)}</p>
                 </div>
               </div>
 
@@ -299,10 +320,6 @@ export default function AssetDetailPage() {
             </CardHeader>
             <CardContent className="flex flex-col items-center justify-center py-8">
               <div className="bg-white rounded-lg p-4 flex items-center justify-center border">
-                {/* Use window.location.href if available, else placeholder. 
-                      Since this is client component, window is available in useEffect, 
-                      but simpler to just use ID for now or construct URL. 
-                  */}
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`${typeof window !== "undefined" ? window.location.origin : ""}/assets/${asset.id}`)}`}
                   alt="Asset QR Code"
@@ -348,7 +365,7 @@ export default function AssetDetailPage() {
           <CardHeader>
             <CardTitle>Additional Information</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-3 gap-4">
+          <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Created At</p>
               <p className="mt-1 text-sm">
@@ -375,7 +392,7 @@ export default function AssetDetailPage() {
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Asset ID</p>
-              <p className="mt-1 text-sm font-mono">{asset.id}</p>
+              <p className="mt-1 text-sm font-mono break-all">{asset.id}</p>
             </div>
           </CardContent>
         </Card>
@@ -391,25 +408,26 @@ export default function AssetDetailPage() {
               <div className="flex flex-col lg:flex-row gap-8">
                 <div className="flex-1">
                   <div className="grid grid-cols-2 gap-4">
+                    {/* Semua nilai keuangan di sini dipanggil menggunakan formatRupiah */}
                     <div className="p-4 bg-muted/40 rounded-lg">
                       <p className="text-sm font-medium text-muted-foreground">Nilai Perolehan (Purchase)</p>
-                      <p className="mt-1 text-2xl font-bold">Rp {financeData.metrics.purchasePrice.toLocaleString("id-ID")}</p>
+                      <p className="mt-1 text-2xl font-bold">{formatRupiah(financeData.metrics.purchasePrice)}</p>
                     </div>
                     <div className="p-4 bg-primary/5 rounded-lg border border-primary/10">
                       <p className="text-sm font-medium text-primary/80">Nilai Buku Saat Ini</p>
-                      <p className="mt-1 text-2xl font-bold text-primary">Rp {financeData.metrics.currentBookValue.toLocaleString("id-ID")}</p>
+                      <p className="mt-1 text-2xl font-bold text-primary">{formatRupiah(financeData.metrics.currentBookValue)}</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Nilai Sisa (Salvage)</p>
-                      <p className="mt-1 text-lg font-semibold">Rp {financeData.metrics.salvageValue.toLocaleString("id-ID")}</p>
+                      <p className="mt-1 text-lg font-semibold">{formatRupiah(financeData.metrics.salvageValue)}</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Akumulasi Penyusutan</p>
-                      <p className="mt-1 text-red-500 font-medium">- Rp {financeData.metrics.accumulatedDepreciation.toLocaleString("id-ID")}</p>
+                      <p className="mt-1 text-red-500 font-medium">- {formatRupiah(financeData.metrics.accumulatedDepreciation)}</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Penyusutan Bulanan</p>
-                      <p className="mt-1">Rp {financeData.metrics.monthlyDepreciation.toLocaleString("id-ID")} / bln</p>
+                      <p className="mt-1">{formatRupiah(financeData.metrics.monthlyDepreciation)} / bln</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Umur Terpakai</p>
@@ -420,15 +438,15 @@ export default function AssetDetailPage() {
                   </div>
                 </div>
                 <div className="flex-1 min-h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={financeData.chartData} margin={{ top: 5, right: 20, bottom: 5, left: 20 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="label" className="text-xs" />
-                      <YAxis tickFormatter={(value) => `Rp ${(value / 1000000).toFixed(0)}M`} width={80} className="text-xs" />
-                      <RechartsTooltip formatter={(value: any) => [`Rp ${value.toLocaleString("id-ID")}`, "Book Value"]} labelClassName="text-black font-semibold" />
-                      <Line type="monotone" dataKey="bookValue" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  <ChartContainer config={chartConfig} className="aspect-auto h-[300px] w-full">
+                    <LineChart accessibilityLayer data={financeData.chartData} margin={{ top: 20, right: 20, left: 20, bottom: 0 }}>
+                      <CartesianGrid vertical={false} />
+                      <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={10} className="text-xs" />
+                      {/* Tooltip pada grafik juga diformat ulang menggunakan formatRupiah */}
+                      <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel formatter={(value) => formatRupiah(value as number)} />} />
+                      <Line type="natural" dataKey="bookValue" stroke="var(--color-bookValue)" strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
                     </LineChart>
-                  </ResponsiveContainer>
+                  </ChartContainer>
                 </div>
               </div>
             ) : (

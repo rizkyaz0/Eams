@@ -1,4 +1,4 @@
-// proxy.ts
+// proxy.ts — Next.js 16 middleware convention: file is 'proxy.ts', function must be named 'proxy'
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyToken } from "./lib/auth";
@@ -17,6 +17,7 @@ const protectedRoutes = [
   "/approvals",
   "/stocktake",
   "/settings",
+  "/divisions",
   "/api/assets",
   "/api/users",
   "/api/bast",
@@ -35,7 +36,7 @@ const protectedRoutes = [
 // Routes only accessible when NOT logged in
 const authRoutes = ["/login", "/register"];
 
-// IMPORTANT: Project specific naming convention 'proxy' instead of 'middleware'
+// Next.js 16: file is named 'proxy.ts' AND the function must be named 'proxy'
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -72,7 +73,6 @@ export async function proxy(request: NextRequest) {
   }
 
   // 3. Pass user info to API routes via headers
-  // Using the standard Next.js way to continue with request headers
   if (user && pathname.startsWith("/api")) {
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set("x-user-id", user.userId);
@@ -88,10 +88,6 @@ export async function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
-// For Next.js to recognize it as a proxy export if named differently
-export default proxy;
-
 export const config = {
   matcher: ["/((?!_next|favicon.ico|api/auth|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
 };
-
