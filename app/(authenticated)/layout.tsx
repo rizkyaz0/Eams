@@ -23,7 +23,7 @@ export default async function AuthenticatedLayout({ children }: { children: Reac
         <SiteHeader />
         {children}
       </SidebarInset>
-      <PushNotificationProvider userId={user.id} />
+      <PushNotificationProvider userId={user.userId} />
     </SidebarProvider>
   );
 }
