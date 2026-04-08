@@ -30,6 +30,18 @@ const BAST_TYPE_LABELS: Record<string, string> = {
   STOCK_OPNAME: "Stock Opname",
 };
 
+const BAST_TYPE_DESCRIPTIONS: Record<string, string> = {
+  ASSIGNMENT: "Tujuan: Menyerahkan aset kepada pengguna/pegawai untuk digunakan sebagai tanggung jawabnya.",
+  RETURN: "Tujuan: Mengembalikan aset ke pengelola/admin karena sudah tidak digunakan.",
+  MUTATION: "Tujuan: Memindahkan aset dari satu lokasi/divisi ke lokasi/divisi lain.",
+  DISPOSAL: "Tujuan: Menghapus aset dari sistem secara permanen (misal: rusak, hilang, dilelang).",
+  MAINTENANCE_OUT: "Tujuan: Mengirim aset ke vendor eksternal untuk diperbaiki (status akan menjadi IN_MAINTENANCE).",
+  MAINTENANCE_IN: "Tujuan: Menerima kembali aset dari vendor setelah selesai diperbaiki.",
+  PROCUREMENT: "Tujuan: Memasukkan aset yang baru saja dibeli ke dalam sistem inventaris.",
+  STOCK_OPNAME: "Tujuan: Mencetak/mendokumentasikan hasil audit atau penyesuaian stok reguler.",
+};
+
+
 // Which BAST types require a target user (Penanggung Jawab Baru)
 const NEEDS_HOLDER: BastType[] = [BastType.ASSIGNMENT, BastType.MUTATION, BastType.PROCUREMENT];
 // Which BAST types show target location
@@ -146,8 +158,8 @@ export function CreateBastDialog({ open, onOpenChange, onSuccess }: CreateBastDi
       let recipientName = formData.recipientName;
       let recipientPosition = formData.recipientPosition;
 
-      if (needsHolder && formData.recipientUserId) {
-        const selectedUser = users.find((u) => u.id === formData.recipientUserId);
+      if (formData.userTerimaId) {
+        const selectedUser = users.find((u) => u.id === formData.userTerimaId);
         if (selectedUser) {
           recipientName = selectedUser.fullName;
           recipientPosition = selectedUser.role;
@@ -206,7 +218,7 @@ export function CreateBastDialog({ open, onOpenChange, onSuccess }: CreateBastDi
   };
 
   // Validate step 1 based on type
-  const canProceedToStep2 = formData.type && (isMaintenance ? !!formData.vendorName : isDisposal ? !!formData.disposalReason : !!formData.recipientName);
+  const canProceedToStep2 = formData.type && !!formData.userSerahId && !!formData.userTerimaId && (isMaintenance ? !!formData.vendorName : isDisposal ? !!formData.disposalReason : true);
 
   const canSubmit = selectedAssets.length > 0;
 
@@ -257,6 +269,11 @@ export function CreateBastDialog({ open, onOpenChange, onSuccess }: CreateBastDi
                   ))}
                 </SelectContent>
               </Select>
+              {formData.type && (
+                <div className="text-xs text-muted-foreground mt-1 bg-muted/60 p-3 rounded-md border-l-4 border-primary">
+                  {BAST_TYPE_DESCRIPTIONS[formData.type as string]}
+                </div>
+              )}
             </div>
 
             {/* ── MAINTENANCE type fields ── */}
@@ -332,56 +349,12 @@ export function CreateBastDialog({ open, onOpenChange, onSuccess }: CreateBastDi
               </div>
             )}
 
-            {/* ── Recipient section — hidden for MAINTENANCE types ── */}
+            {/* ── Recipient section — disembunyikan sesuai permintaan UI / Legacy Fields ── */}
+            {/* 
             {!isMaintenance && (
-              <div className="border rounded-xl p-4 bg-muted/30 grid gap-3">
-                <p className="text-sm font-semibold flex items-center gap-2">
-                  <UserCheck className="size-4 text-primary" />
-                  {needsHolder ? "Diserahkan Kepada (Penanggung Jawab Baru)" : "Penerima / Kontak"}
-                </p>
-
-                {/* User dropdown when type requires a system holder */}
-                {needsHolder && (
-                  <div className="grid gap-2">
-                    <Label className="text-xs">Pilih Pengguna Sistem (Penanggung Jawab)</Label>
-                    <Select
-                      value={formData.recipientUserId}
-                      onValueChange={(v) => {
-                        const u = users.find((u) => u.id === v);
-                        setFormData({
-                          ...formData,
-                          recipientUserId: v,
-                          recipientName: u?.fullName || formData.recipientName,
-                          recipientPosition: u?.role || formData.recipientPosition,
-                        });
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih pengguna sistem..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {users.map((u) => (
-                          <SelectItem key={u.id} value={u.id}>
-                            {u.fullName} — {u.role} {u.division ? `(${u.division.name})` : ""}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="grid gap-2">
-                    <Label className="text-xs">Nama Penerima *</Label>
-                    <Input value={formData.recipientName} onChange={(e) => setFormData({ ...formData, recipientName: e.target.value })} placeholder="Nama penerima..." />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label className="text-xs">Jabatan / Posisi</Label>
-                    <Input value={formData.recipientPosition} onChange={(e) => setFormData({ ...formData, recipientPosition: e.target.value })} placeholder="Staff IT, Manager, dll." />
-                  </div>
-                </div>
-              </div>
+                ... hide legacy inputs
             )}
+            */}
 
             {/* ── Target Location ── */}
             {needsLocation && (

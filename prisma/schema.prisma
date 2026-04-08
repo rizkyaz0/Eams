@@ -60,7 +60,9 @@ model User {
   bastTerima    Bast[]     @relation("BastTerima")  // BAST di mana user ini sebagai penerima
   division      Division?  @relation(fields: [divisionId], references: [id])
   stockTakes    StockTake[]
+  notifications Notification[]
 }
+
 
 model Asset {
   id            String         @id @default(cuid())
@@ -251,4 +253,18 @@ enum BastType {
   MAINTENANCE_IN
   DISPOSAL
   STOCK_OPNAME
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String   // e.g., 'INFO', 'WARNING', 'SUCCESS', 'NEW_BAST', 'NEW_USER'
+  read      Boolean  @default(false)
+  link      String?  // Optional link to navigate to when clicked
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, read])
 }

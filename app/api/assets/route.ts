@@ -19,7 +19,9 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const status = searchParams.get("status") as AssetStatus | null;
+    const excludeStatus = searchParams.get("excludeStatus");
     const categoryId = searchParams.get("categoryId");
+    const locationId = searchParams.get("locationId");
     const search = searchParams.get("search");
 
     const skip = (page - 1) * limit;
@@ -27,12 +29,20 @@ export async function GET(request: NextRequest) {
     // Build where clause
     const where: any = {};
 
+    if (excludeStatus) {
+      where.status = { not: excludeStatus };
+    }
+
     if (status) {
-      where.status = status;
+      where.status = status; // This overwrites excludeStatus if both are provided, which is fine
     }
 
     if (categoryId) {
       where.categoryId = categoryId;
+    }
+
+    if (locationId) {
+      where.locationId = locationId;
     }
 
     if (search) {
@@ -91,29 +101,49 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { name, tagNumber, serialNumber, specification, purchaseDate, purchasePrice, imagePath, categoryId, locationId, divisionId, status, condition, salvageValue, usefulLife, rfidData } = body;
+    const { name, tagNumber, serialNumber, specification, purchaseDate, purchasePrice, imagePath, categoryId, locationId, divisionId, status, condition, salvageValue, usefulLife, rfidData, description } = body;
 
     // Validation
-    if (!name || !tagNumber || !purchaseDate || !purchasePrice || !categoryId) {
-      return errorResponse("Name, tag number, purchase date, purchase price, and category are required", 400);
+    if (!name || !purchaseDate || !purchasePrice || !categoryId) {
+      return errorResponse("Name, purchase date, purchase price, and category are required", 400);
+    }
+
+    let finalTagNumber = tagNumber;
+
+    if (!finalTagNumber) {
+      // Auto generate tag number
+      const category = await db.category.findUnique({ where: { id: categoryId } });
+      const currentYearMonth = new Date().toISOString().slice(2,7).replace("-", ""); // e.g. 2405 for May 2024
+      const count = await db.asset.count({ where: { categoryId } });
+      const sequentialStr = String(count + 1).padStart(4, '0');
+      const catCode = category?.code || category?.name.substring(0, 3).toUpperCase() || 'AST';
+      
+      let locCode = "GEN";
+      if (locationId) {
+        const location = await db.location.findUnique({ where: { id: locationId } });
+        locCode = location?.name.substring(0, 3).toUpperCase() || "GEN";
+      }
+
+      finalTagNumber = `${catCode}-${locCode}-${currentYearMonth}-${sequentialStr}`;
     }
 
     // Check if tag number already exists
     const existingAsset = await db.asset.findUnique({
-      where: { tagNumber },
+      where: { tagNumber: finalTagNumber },
     });
 
     if (existingAsset) {
-      return errorResponse("Asset with this tag number already exists", 409);
+      return errorResponse("Asset with this tag number already exists. Silakan input manual.", 409);
     }
 
     // Create asset
     const asset = await db.asset.create({
       data: {
         name,
-        tagNumber,
+        tagNumber: finalTagNumber,
         serialNumber: serialNumber || null,
         specification: specification || null,
+        description: description || null,
         purchaseDate: new Date(purchaseDate),
         purchasePrice,
         imagePath: imagePath || null,

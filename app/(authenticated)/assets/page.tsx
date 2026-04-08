@@ -10,6 +10,8 @@ import { Plus, Search, QrCode, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { QrScannerDialog } from "@/components/qr-scanner-dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Trash2, Printer } from "lucide-react";
 
 export default function AssetsPage() {
   const [assets, setAssets] = useState<any[]>([]);
@@ -19,10 +21,12 @@ export default function AssetsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [locationFilter, setLocationFilter] = useState("");
   const [categories, setCategories] = useState<any[]>([]);
   const [locations, setLocations] = useState<any[]>([]);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("active");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -33,7 +37,7 @@ export default function AssetsPage() {
     fetchAssets();
     fetchCategories();
     fetchLocations();
-  }, [page, search, statusFilter, categoryFilter]);
+  }, [page, search, statusFilter, categoryFilter, locationFilter, activeTab]);
 
   const fetchAssets = async () => {
     setLoading(true);
@@ -42,8 +46,11 @@ export default function AssetsPage() {
         page: page.toString(),
         limit: "10",
         ...(search && { search }),
-        ...(statusFilter && statusFilter !== "all" && { status: statusFilter }),
+        ...(statusFilter && statusFilter !== "all" && activeTab !== "trash" && { status: statusFilter }),
+        ...(activeTab === "trash" && { status: "DISPOSED" }),
+        ...(activeTab === "active" && (!statusFilter || statusFilter === "all") ? { excludeStatus: "DISPOSED" } : {}), // Jika active, ignore disposed
         ...(categoryFilter && categoryFilter !== "all" && { categoryId: categoryFilter }),
+        ...(locationFilter && locationFilter !== "all" && { locationId: locationFilter }),
       });
 
       const response = await fetch(`/api/assets?${params}`);
@@ -126,21 +133,34 @@ export default function AssetsPage() {
           </div>
           {/* flex-wrap ditambahkan agar tombol turun baris dengan rapi */}
           <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => window.open(`/assets/print-qrs?category=${categoryFilter}&location=${locationFilter}&status=${activeTab === 'trash' ? 'DISPOSED' : statusFilter}`, "_blank")} className="flex-1 sm:flex-none" title="Cetak QR Code yang di filter">
+              <Printer className="mr-2 size-4" />
+              Print QR
+            </Button>
             <Button variant="outline" onClick={handleExport} className="flex-1 sm:flex-none">
               <Download className="mr-2 size-4" />
               Export
             </Button>
             <Button variant="outline" onClick={() => setScannerOpen(true)} className="flex-1 sm:flex-none">
               <QrCode className="mr-2 size-4" />
-              Scan Asset
+              Scan
             </Button>
             {/* Tombol utama Add Asset akan memenuhi 1 baris penuh di mobile, tapi menyesuaikan konten di desktop */}
             <Button onClick={() => setCreateDialogOpen(true)} className="w-full sm:w-auto">
               <Plus className="mr-2 size-4" />
-              Add Asset
+              Tambah Aset
             </Button>
           </div>
         </div>
+
+        <Tabs defaultValue="active" onValueChange={(v) => { setActiveTab(v); setPage(1); }}>
+          <TabsList className="mb-4">
+            <TabsTrigger value="active">Daftar Aset</TabsTrigger>
+            <TabsTrigger value="trash" className="text-red-500 data-[state=active]:text-red-600">
+              <Trash2 className="size-4 mr-2" />
+              Tempat Sampah
+            </TabsTrigger>
+          </TabsList>
 
         <Card>
           <CardContent className="p-6">
@@ -151,21 +171,22 @@ export default function AssetsPage() {
               </div>
               {mounted ? (
                 <>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full md:w-[180px]">
-                      <SelectValue placeholder="All Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="AVAILABLE">Available</SelectItem>
-                      <SelectItem value="IN_USE">In Use</SelectItem>
-                      <SelectItem value="IN_MAINTENANCE">Maintenance</SelectItem>
-                      <SelectItem value="MISSING">Missing</SelectItem>
-                      <SelectItem value="DISPOSED">Disposed</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {activeTab !== "trash" && (
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-full md:w-[150px]">
+                        <SelectValue placeholder="All Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="AVAILABLE">Available</SelectItem>
+                        <SelectItem value="IN_USE">In Use</SelectItem>
+                        <SelectItem value="IN_MAINTENANCE">Maintenance</SelectItem>
+                        <SelectItem value="MISSING">Missing</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
                   <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                    <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectTrigger className="w-full md:w-[150px]">
                       <SelectValue placeholder="All Categories" />
                     </SelectTrigger>
                     <SelectContent>
@@ -173,6 +194,19 @@ export default function AssetsPage() {
                       {categories.map((cat) => (
                         <SelectItem key={cat.id} value={cat.id}>
                           {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={locationFilter} onValueChange={setLocationFilter}>
+                    <SelectTrigger className="w-full md:w-[150px]">
+                      <SelectValue placeholder="All Locations" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Locations</SelectItem>
+                      {locations.map((loc) => (
+                        <SelectItem key={loc.id} value={loc.id}>
+                          {loc.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -189,7 +223,8 @@ export default function AssetsPage() {
           </CardContent>
         </Card>
 
-        <AssetsTable assets={assets} loading={loading} page={page} total={total} onPageChange={setPage} onRefresh={fetchAssets} categories={categories} locations={locations} />
+        <AssetsTable assets={assets} loading={loading} page={page} total={total} onPageChange={setPage} onRefresh={fetchAssets} categories={categories} locations={locations} isTrash={activeTab === 'trash'} />
+        </Tabs>
       </div>
 
       <CreateAssetDialog

@@ -10,9 +10,17 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name } = body;
+    const { name, code, description } = body;
 
     if (!name) return errorResponse("Name is required", 400);
+
+    // Filter unik jika code tidak null/kosong
+    if (code) {
+      const existingCode = await prisma.category.findFirst({
+        where: { code, NOT: { id } },
+      });
+      if (existingCode) return errorResponse("Kode kategori sudah digunakan", 409);
+    }
 
     // Check if name exists (unique)
     const existing = await prisma.category.findFirst({
@@ -26,7 +34,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const category = await prisma.category.update({
       where: { id },
-      data: { name },
+      data: { name, code: code || null, description: description || null },
     });
 
     return successResponse(category);

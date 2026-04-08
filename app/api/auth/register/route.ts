@@ -62,6 +62,28 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Notify admins about new user
+    try {
+      const admins = await db.user.findMany({
+        where: { role: { in: ["SUPER_ADMIN", "ADMIN_INSTANSI"] } },
+        select: { id: true },
+      });
+      
+      if (admins.length > 0) {
+        await db.notification.createMany({
+          data: admins.map(admin => ({
+            userId: admin.id,
+            title: "Pengguna Baru",
+            message: `${fullName} baru saja mendaftar.`,
+            type: "NEW_USER",
+            link: "/settings/users",
+          }))
+        });
+      }
+    } catch (e) {
+      console.error("[REGISTER] Notification failed:", e);
+    }
+
     return successResponse(newUser, "Registrasi berhasil! Silakan login.", 201);
   } catch (error: any) {
     console.error("Register error:", error);

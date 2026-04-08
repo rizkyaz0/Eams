@@ -40,6 +40,26 @@ export async function GET(request: NextRequest) {
       where.OR = [{ bastNumber: { contains: search, mode: "insensitive" } }, { description: { contains: search, mode: "insensitive" } }];
     }
 
+    // Role-based filtering
+    if (user.role !== "SUPER_ADMIN" && user.role !== "ADMIN_INSTANSI") {
+      const roleFilter = [
+        { creatorId: user.userId },
+        { approverId: user.userId },
+        { userSerahId: user.userId },
+        { userTerimaId: user.userId },
+      ];
+      
+      if (where.OR) {
+        where.AND = [
+          { OR: where.OR },
+          { OR: roleFilter }
+        ];
+        delete where.OR;
+      } else {
+        where.OR = roleFilter;
+      }
+    }
+
     // Get BAST with pagination
     const [basts, total] = await Promise.all([
       db.bast.findMany({
@@ -220,6 +240,53 @@ export async function POST(request: NextRequest) {
           }),
         ),
       ).catch((err) => console.error("[BAST] Email notification failed:", err));
+
+      // Create Push Notifications for required users
+      try {
+        const notifications = [];
+        
+        // Notify Admins
+        admins.forEach(admin => {
+          notifications.push({
+            userId: admin.id,
+            title: "BAST Baru",
+            message: `BAST ${bastNumber} membutuhkan persetujuan.`,
+            type: "NEW_BAST",
+            link: `/bast`,
+          });
+        });
+
+        // Notify userSerahId if exists and not an admin already
+        if (userSerahId && !admins.some(a => a.id === userSerahId) && userSerahId !== user.userId) {
+             notifications.push({
+               userId: userSerahId,
+               title: "Persetujuan BAST",
+               message: `Anda ditandai sebagai Penyerah pada BAST ${bastNumber}.`,
+               type: "NEW_BAST",
+               link: `/bast`,
+             });
+        }
+
+        // Notify userTerimaId if exists and not an admin already
+        if (userTerimaId && !admins.some(a => a.id === userTerimaId) && userTerimaId !== user.userId) {
+             notifications.push({
+               userId: userTerimaId,
+               title: "Persetujuan BAST",
+               message: `Anda ditandai sebagai Penerima pada BAST ${bastNumber}.`,
+               type: "NEW_BAST",
+               link: `/bast`,
+             });
+        }
+
+        if (notifications.length > 0) {
+          await db.notification.createMany({
+            data: notifications,
+            skipDuplicates: true
+          });
+        }
+      } catch (err) {
+        console.error("[BAST] DB Notification failed:", err);
+      }
     }
 
     return successResponse(completeBast, "BAST berhasil dibuat", 201);

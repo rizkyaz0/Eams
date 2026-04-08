@@ -104,6 +104,23 @@ export async function POST(
       ? "BAST telah disetujui oleh kedua pihak"
       : `Persetujuan sebagai pihak ${pihak === "serah" ? "penyerah" : "penerima"} berhasil`;
 
+    // Notify users
+    try {
+      if (bothApproved) {
+        await db.notification.create({
+          data: {
+            userId: updated.creatorId,
+            title: "BAST Disetujui",
+            message: `BAST ${updated.bastNumber} telah disetujui oleh seluruh pihak.`,
+            type: "SUCCESS",
+            link: `/bast/${updated.id}`
+          }
+        });
+      }
+    } catch (e) {
+      console.error("[APPROVE BAST] Notification failed", e);
+    }
+
     return successResponse(updated, message);
   } catch (error) {
     console.error("Approve BAST error:", error);

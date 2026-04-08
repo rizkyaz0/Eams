@@ -59,8 +59,7 @@ export function EditAssetDialog({ open, onOpenChange, onSuccess, asset, categori
     }
   }, [asset]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleImageChange = (file: File | null) => {
     if (file) {
       setImage(file);
       const reader = new FileReader();
@@ -69,6 +68,18 @@ export function EditAssetDialog({ open, onOpenChange, onSuccess, asset, categori
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      handleImageChange(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -134,14 +145,19 @@ export function EditAssetDialog({ open, onOpenChange, onSuccess, asset, categori
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto px-1">
             <div className="flex flex-col items-center justify-center gap-4 mb-4">
-              <Label htmlFor="edit-image-upload" className="cursor-pointer group relative">
+              <Label 
+                htmlFor="edit-image-upload" 
+                className="cursor-pointer group relative"
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+              >
                 <div className="size-32 rounded-xl border-2 border-dashed border-muted-foreground/25 flex flex-col items-center justify-center transition-all group-hover:border-primary/50 group-hover:bg-primary/5 overflow-hidden">
                   {imagePreview ? (
                     <img src={imagePreview} alt="Preview" className="size-full object-cover" />
                   ) : (
                     <>
                       <Camera className="size-8 text-muted-foreground group-hover:text-primary transition-colors" />
-                      <span className="text-[10px] text-muted-foreground mt-2 uppercase font-bold tracking-wider">Change Photo</span>
+                      <span className="text-[10px] text-muted-foreground mt-2 uppercase font-bold tracking-wider">Upload / Drag & Drop</span>
                     </>
                   )}
                 </div>
@@ -149,8 +165,8 @@ export function EditAssetDialog({ open, onOpenChange, onSuccess, asset, categori
                   <Camera className="size-6 text-white" />
                 </div>
               </Label>
-              <input id="edit-image-upload" type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Preferred: 1:1 Aspect Ratio (Square)</p>
+              <input id="edit-image-upload" type="file" accept="image/*" className="hidden" onChange={(e) => handleImageChange(e.target.files?.[0] || null)} />
+              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Preferred: 1:1 Aspect Ratio (Square) · Klik atau Drag Gambar</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -159,8 +175,8 @@ export function EditAssetDialog({ open, onOpenChange, onSuccess, asset, categori
                 <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="tagNumber">Tag Number *</Label>
-                <Input id="tagNumber" value={formData.tagNumber} onChange={(e) => setFormData({ ...formData, tagNumber: e.target.value })} required />
+                <Label htmlFor="tagNumber">Tag Number</Label>
+                <Input id="tagNumber" value={formData.tagNumber} onChange={(e) => setFormData({ ...formData, tagNumber: e.target.value })} placeholder="Auto Generate if empty" />
               </div>
             </div>
 

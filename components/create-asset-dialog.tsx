@@ -56,8 +56,7 @@ export function CreateAssetDialog({ open, onOpenChange, onSuccess, categories, l
     }
   }, [open]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleImageChange = (file: File | null) => {
     if (file) {
       setImage(file);
       const reader = new FileReader();
@@ -68,11 +67,23 @@ export function CreateAssetDialog({ open, onOpenChange, onSuccess, categories, l
     }
   };
 
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      handleImageChange(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.tagNumber || !formData.categoryId || !formData.purchaseDate) {
-      toast.error("Nama, tag number, kategori, dan tanggal pembelian wajib diisi");
+    if (!formData.name || !formData.categoryId || !formData.purchaseDate) {
+      toast.error("Nama, kategori, dan tanggal pembelian wajib diisi");
       return;
     }
 
@@ -143,20 +154,25 @@ export function CreateAssetDialog({ open, onOpenChange, onSuccess, categories, l
           <div className="grid gap-4 py-2">
             {/* Image Upload */}
             <div className="flex flex-col items-center justify-center gap-2">
-              <Label htmlFor="image-upload" className="cursor-pointer group relative">
-                <div className="size-28 rounded-xl border-2 border-dashed border-muted-foreground/25 flex flex-col items-center justify-center transition-all group-hover:border-primary/50 group-hover:bg-primary/5 overflow-hidden">
+              <Label 
+                htmlFor="image-upload" 
+                className="cursor-pointer group relative"
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+              >
+                <div className="size-32 rounded-xl border-2 border-dashed border-muted-foreground/25 flex flex-col items-center justify-center transition-all group-hover:border-primary/50 group-hover:bg-primary/5 overflow-hidden">
                   {imagePreview ? (
                     <img src={imagePreview} alt="Preview" className="size-full object-cover" />
                   ) : (
-                    <>
-                      <Camera className="size-7 text-muted-foreground group-hover:text-primary transition-colors" />
-                      <span className="text-[10px] text-muted-foreground mt-1 uppercase font-bold tracking-wider">Upload Foto</span>
-                    </>
+                    <div className="flex flex-col items-center p-2 text-center">
+                      <Camera className="size-8 text-muted-foreground group-hover:text-primary transition-colors" />
+                      <span className="text-[10px] text-muted-foreground mt-2 uppercase font-bold tracking-wider">Drag & Drop / Upload</span>
+                    </div>
                   )}
                 </div>
               </Label>
-              <Input id="image-upload" type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Opsional · Rasio 1:1 disarankan</p>
+              <Input id="image-upload" type="file" accept="image/*" className="hidden" onChange={(e) => handleImageChange(e.target.files?.[0] || null)} />
+              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Opsional · Klik atau Drag Gambar</p>
             </div>
 
             {/* Name + Tag Number */}
@@ -166,8 +182,8 @@ export function CreateAssetDialog({ open, onOpenChange, onSuccess, categories, l
                 <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Laptop Dell Inspiron" required />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="tagNumber">Tag Number *</Label>
-                <Input id="tagNumber" value={formData.tagNumber} onChange={(e) => setFormData({ ...formData, tagNumber: e.target.value })} placeholder="IT-001" required />
+                <Label htmlFor="tagNumber">Tag Number <span className="text-[10px] text-muted-foreground font-normal">(Opsional)</span></Label>
+                <Input id="tagNumber" value={formData.tagNumber} onChange={(e) => setFormData({ ...formData, tagNumber: e.target.value })} placeholder="Auto Generate jika kosong..." />
               </div>
             </div>
 

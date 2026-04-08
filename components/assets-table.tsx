@@ -21,6 +21,7 @@ interface AssetsTableProps {
   onRefresh: () => void;
   categories: any[];
   locations: any[];
+  isTrash?: boolean;
 }
 
 const statusConfig = {
@@ -38,7 +39,7 @@ const conditionConfig = {
   TOTAL_LOSS: "Total Loss",
 };
 
-export function AssetsTable({ assets, loading, page, total, onPageChange, onRefresh, categories, locations }: AssetsTableProps) {
+export function AssetsTable({ assets, loading, page, total, onPageChange, onRefresh, categories, locations, isTrash }: AssetsTableProps) {
   const router = useRouter();
   const [editAsset, setEditAsset] = useState<any>(null);
   const [deleteAsset, setDeleteAsset] = useState<any>(null);
@@ -62,8 +63,8 @@ export function AssetsTable({ assets, loading, page, total, onPageChange, onRefr
     return (
       <Card className="p-12">
         <div className="text-center">
-          <p className="text-lg font-semibold">No assets found</p>
-          <p className="text-sm text-muted-foreground mt-1">Try adjusting your filters or create a new asset</p>
+          <p className="text-lg font-semibold">{isTrash ? "Tempat sampah kosong" : "No assets found"}</p>
+          <p className="text-sm text-muted-foreground mt-1">{isTrash ? "Tidak ada aset yang terhapus" : "Try adjusting your filters or create a new asset"}</p>
         </div>
       </Card>
     );
@@ -91,12 +92,25 @@ export function AssetsTable({ assets, loading, page, total, onPageChange, onRefr
                 const status = statusConfig[asset.status as keyof typeof statusConfig];
                 return (
                   <TableRow key={asset.id}>
-                    <TableCell className="font-mono font-semibold">{asset.tagNumber}</TableCell>
+                    <TableCell className="font-mono font-semibold">
+                      <div className="flex items-center gap-3">
+                        <div className="relative size-10 shrink-0 overflow-hidden rounded-md border bg-muted/30">
+                          {asset.imagePath ? (
+                            <img src={asset.imagePath} alt={asset.name} className="size-full object-cover" />
+                          ) : (
+                            <div className="flex size-full items-center justify-center text-muted-foreground/50">
+                              <span className="text-[8px] uppercase tracking-tighter">No Pic</span>
+                            </div>
+                          )}
+                        </div>
+                        {asset.tagNumber}
+                      </div>
+                    </TableCell>
                     <TableCell className="font-medium">{asset.name}</TableCell>
                     <TableCell>{asset.category?.name || "-"}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <div className={`size-2 rounded-full ${status?.color}`} />
+                        <div className={`size-2 rounded-full ${status?.color || 'bg-gray-400'}`} />
                         <Badge variant={status?.variant || "outline"}>{status?.label || asset.status}</Badge>
                       </div>
                     </TableCell>
@@ -113,19 +127,28 @@ export function AssetsTable({ assets, loading, page, total, onPageChange, onRefr
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => router.push(`/assets/${asset.id}`)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setEditAsset(asset)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive" onClick={() => setDeleteAsset(asset)}>
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
+                          {isTrash ? (
+                            <DropdownMenuItem className="text-destructive" onClick={() => setDeleteAsset(asset)}>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Hapus Permanen
+                            </DropdownMenuItem>
+                          ) : (
+                            <>
+                              <DropdownMenuItem onClick={() => router.push(`/assets/${asset.id}`)}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setEditAsset(asset)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-destructive" onClick={() => setDeleteAsset(asset)}>
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

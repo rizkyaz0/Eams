@@ -461,6 +461,54 @@ export default function AssetDetailPage() {
         </Card>
       </div>
 
+      <div className="grid gap-4 mt-4 p-4 md:px-6 md:pb-6 md:pt-0 print:hidden border-t">
+        <h2 className="text-xl font-bold tracking-tight mb-2">Riwayat Transaksi (BAST)</h2>
+        <Card className="col-span-full">
+          <CardContent className="pt-6">
+            {!asset.bastDetails || asset.bastDetails.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-8 text-center bg-muted/20 rounded-lg">
+                <p className="text-muted-foreground">Belum ada riwayat transaksi BAST untuk aset ini.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="text-xs uppercase bg-muted/50">
+                    <tr>
+                      <th className="px-4 py-3 rounded-tl-lg">Nomor BAST</th>
+                      <th className="px-4 py-3">Tipe BAST</th>
+                      <th className="px-4 py-3">Tanggal Efektif</th>
+                      <th className="px-4 py-3 rounded-tr-lg">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {asset.bastDetails.map((detail: any, index: number) => (
+                      <tr key={index} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                        <td className="px-4 py-3 font-medium">{detail.bast.bastNumber}</td>
+                        <td className="px-4 py-3">
+                          <Badge variant="outline">{detail.bast.type}</Badge>
+                        </td>
+                        <td className="px-4 py-3">
+                          {detail.bast.effectiveDate ? new Date(detail.bast.effectiveDate).toLocaleDateString("id-ID") : "-"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            onClick={() => router.push(`/bast/${detail.bast.id}`)}
+                          >
+                            Lihat Dokumen
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Dialogs */}
       {editOpen && (
         <EditAssetDialog

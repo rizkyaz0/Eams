@@ -3,6 +3,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { PushNotificationProvider } from "@/components/push-notification-provider";
 
 export default async function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
@@ -22,6 +23,7 @@ export default async function AuthenticatedLayout({ children }: { children: Reac
         <SiteHeader />
         {children}
       </SidebarInset>
+      <PushNotificationProvider userId={user.id} />
     </SidebarProvider>
   );
 }

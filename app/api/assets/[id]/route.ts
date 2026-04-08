@@ -149,6 +149,8 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
   try {
     const { id } = await params;
+    const url = new URL(request.url);
+    const isPermanent = url.searchParams.get("permanent") === "true";
 
     // Check if asset exists
     const existingAsset = await db.asset.findUnique({
@@ -157,6 +159,22 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     if (!existingAsset) {
       return notFoundResponse("Asset not found");
+    }
+
+    if (isPermanent) {
+      // Check if it has BAST details
+      const bastCount = await db.bastDetail.count({
+        where: { assetId: id }
+      });
+
+      if (bastCount > 0) {
+        return errorResponse("Aset tidak dapat dihapus permanen karena masih terkait dengan transaksi BAST", 400);
+      }
+
+      await db.asset.delete({
+        where: { id }
+      });
+      return successResponse(null, "Asset deleted permanently");
     }
 
     // Soft-Delete asset (Mark as DISPOSED)
@@ -174,3 +192,4 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     return errorResponse("Failed to delete asset", 500);
   }
 }
+

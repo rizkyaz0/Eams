@@ -83,9 +83,11 @@ function toCSV(headers: string[], rows: any[][]): string {
   return [headers, ...rows].map((row) => row.map(escape).join(",")).join("\n");
 }
 
+import * as XLSX from "xlsx";
+import JSZip from "jszip";
+
 async function exportCsv(users: any[], categories: any[], locations: any[], assets: any[], basts: any[]) {
-  const JSZip = (await import("jszip")).default;
-  const zip   = new JSZip();
+  const zip = new JSZip();
 
   zip.file("users.csv", toCSV(
     ["ID", "Username", "Nama Lengkap", "Email", "NIP", "Role", "Lembaga", "Aktif", "Dibuat"],
@@ -126,7 +128,6 @@ async function exportCsv(users: any[], categories: any[], locations: any[], asse
 }
 
 async function exportExcel(users: any[], categories: any[], locations: any[], assets: any[], basts: any[]) {
-  const XLSX = await import("xlsx");
   const wb   = XLSX.utils.book_new();
 
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([

@@ -1,0 +1,31 @@
+-Seluruh halaman
+1. Tambahkan seperti notifikasi untuk memberi tahu admin ketika ada user baru yang register, ada bast dibuat dan harus di setujui dan lain lainya, dan yang lainya seperti teknisi dan employed hanya menampilkan bast yang perlu di setujui saja
+2. saya ingin semua komponen memakai komponen dari shadcn ui aja agar konsisten dan jika tidak ada maka buat sendiri namun harus sesuai dengan style nya shadcn
+3. konsisten bahasa, ubah bahasa bahasa indonesia agar menjadi bahasa inggris
+4. warna aksen hanya mengubah beberapa warna pada komponen saja, saya ingin agar seperti di shadcn, bisa memilih warna aksen dan warna aksen itu bisa merubah semua warna komponen
+5. jelaskan juga setiap halaman untuk apa
+6. perbaharui panduan_eams dan Backend_readme
+-Halaman assets
+1. barang yang sudah dihapus yang status nya sudah berubah menjadi disposed itu akan masuk ke halaman tempat sampah dan di halaman sambah bisa hapus permanen aset tetapi jika aset memiliki transaksi bast, maka aset tidak bisa dihapus
+2. saat melakukan penambahan asset, foto aset dan deskripsi(keterangan) tidak masuk ke database dan harusnya tag number itu otomatis berdasarkan kategori/lokasi/nomor aset, sesuaikan data yang ada di database untuk inputan tambah nya
+3. saat tambah dan edit, ada inputan untuk menambah foto, saya ingin bisa drop foto agar lebih mudah menggunakan aplikasi ini
+4. di detail asset harus ada riwayat terakhir bast atau transaksi dari aset tersebut
+5. saya ingin menambahkan fungsi untuk mencetak semua qr code asset secara bersamaan, dan juga saya ingin anda menambahkan filter berdasarkan lokasi juga, jadi lengkap ada filter berdasarkan status, kategori, dan berdasarkan lokasi dan fungsi kan juga agar ketika filter menyala maka ekspor akan hanya mengekspor yang sedang di filter saja
+6. pada tabel list aset, munculkan juga foto nya
+-Halaman kategori
+1. fungsi edit belum mengubah data yang ada di database
+-fitur scan
+1. tampilan fitur scan masih jelek, bisakah di upgrade lagi agar tampilan nya modern, dan keren seperti scan sesungguhnya? dan saya ingin agar kamera nya jangan miror
+-Halaman Bast
+1. modal saat ingin menambahkan bast tidak sesuai dengan tipe dan saya juga bingung apa maksud dari setiap tipe nya
+2. saat saya login dengan user user berbeda, bast masih terlihat semuanya, yang boleh melihat semuanya hanya admin, yang lainya hanya menampilkan bast nya saja atau transaksi yang dia terlibat saja, dan juga saya melihat belum ada halaman aproval di semua user, harusnya aproval bisa di akses semua orang dan menampilkan aproval bast yang terlibat saja, misalnya budi sebagai penyerah dan anto sebagai penerima, nah di halaman aproval budi dan anto muncul bast tersebut tetapi di user lain tidak muncul
+3. ekspor excel masih belum rapih, coba buat agar ketika di eskpor langsung rapih tersusun, seperti merger dan lain lain nya otomatis
+-Halaman laporan
+1. didalam halaman laporan, ada tabel inventaris barang dan ada juga tabel bast, kedua tabel itu memiliki search, filter yang lengkap, dan juga bisa eskpor ke pdf dan excel.
+2. admin dapat melihat laporan per barang (riwayat serah terima, kondisi, status, lokasi)
+3. admin dapat melihat laporan bast secara keseluruhan
+4. sistem menyediakan filter laporan berdasarkan kategori,lokasi, status barang, status bast
+-fitur ekspor dan backup
+1. eskpor excel masih eror
+-database
+1. ketika saya mengecek manual, masih banyak kolom yang belum di hapus setelah perubahan seperti di bast ada Diserahkan Kepada (Penanggung Jawab Baru), aku tidak yakin ini memang salah atau saya yang tida memahami alur nya, beritahu saja pada saya

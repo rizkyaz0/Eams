@@ -15,15 +15,17 @@ export function DeleteAssetDialog({ open, onOpenChange, onSuccess, asset }: Dele
 
   const handleDelete = async () => {
     setLoading(true);
+    const isPermanent = asset?.status === "DISPOSED";
+    
     try {
-      const response = await fetch(`/api/assets/${asset.id}`, {
+      const response = await fetch(`/api/assets/${asset.id}${isPermanent ? "?permanent=true" : ""}`, {
         method: "DELETE",
       });
 
       const data = await response.json();
 
       if (data.success) {
-        toast.success("Asset deleted successfully");
+        toast.success(isPermanent ? "Aset berhasil dihapus secara permanen" : "Asset deleted successfully");
         onSuccess();
         onOpenChange(false);
       } else {
@@ -36,23 +38,25 @@ export function DeleteAssetDialog({ open, onOpenChange, onSuccess, asset }: Dele
     }
   };
 
+  const isPermanent = asset?.status === "DISPOSED";
+
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete Asset</AlertDialogTitle>
+          <AlertDialogTitle>{isPermanent ? "Hapus Permanen Aset" : "Delete Asset"}</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete <strong>{asset?.name}</strong> ({asset?.tagNumber})?
+            Are you sure you want to {isPermanent ? "PERMANENTLY delete" : "delete"} <strong>{asset?.name}</strong> ({asset?.tagNumber})?
             <br />
             <br />
-            This action cannot be undone.
+            {isPermanent ? "Data yang terhapus permanen tidak dapat dikembalikan lagi. Jika aset memiliki riwayat BAST, sistem akan menolaknya." : "This will move the asset to Trash (Disposed status)."}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
           <AlertDialogAction onClick={handleDelete} disabled={loading} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
             {loading && <Loader2 className="mr-2 size-4 animate-spin" />}
-            Delete
+            {isPermanent ? "Hapus Permanen" : "Hapus"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
