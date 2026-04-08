@@ -216,7 +216,7 @@ export async function POST(request: NextRequest) {
       const admins = await db.user
         .findMany({
           where: { role: { in: ["ADMIN_INSTANSI", "SUPER_ADMIN"] } },
-          select: { email: true, fullName: true },
+          select: { id: true, email: true, fullName: true },
         })
         .catch(() => []);
 
