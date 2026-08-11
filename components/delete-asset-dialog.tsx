@@ -23,11 +23,11 @@ export function DeleteAssetDialog({ open, onOpenChange, onSuccess, asset }: Dele
       const data = await response.json();
 
       if (data.success) {
-        toast.success("Asset deleted successfully");
+        toast.success("BAST Disposal draft created. Waiting for approval");
         onSuccess();
         onOpenChange(false);
       } else {
-        toast.error(data.error || "Failed to delete asset");
+        toast.error(data.error || "Failed to create disposal transaction");
       }
     } catch (error) {
       toast.error("An error occurred");
@@ -42,10 +42,10 @@ export function DeleteAssetDialog({ open, onOpenChange, onSuccess, asset }: Dele
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Asset</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete <strong>{asset?.name}</strong> ({asset?.tagNumber})?
+            Create a disposal draft for <strong>{asset?.name}</strong> ({asset?.tagNumber})?
             <br />
             <br />
-            This action cannot be undone.
+            A BAST Disposal draft will be created and must be approved before the asset is marked as disposed.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

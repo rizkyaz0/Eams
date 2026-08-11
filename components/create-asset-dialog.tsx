@@ -15,14 +15,19 @@ interface CreateAssetDialogProps {
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
   categories: any[];
+  locations: any[];
 }
 
-export function CreateAssetDialog({ open, onOpenChange, onSuccess, categories }: CreateAssetDialogProps) {
+export function CreateAssetDialog({ open, onOpenChange, onSuccess, categories, locations }: CreateAssetDialogProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     tagNumber: "",
+    serialNumber: "",
+    specification: "",
     categoryId: "",
+    locationId: "",
+    condition: "GOOD",
     purchaseDate: "",
     purchasePrice: "",
     description: "",
@@ -87,7 +92,11 @@ export function CreateAssetDialog({ open, onOpenChange, onSuccess, categories }:
       setFormData({
         name: "",
         tagNumber: "",
+        serialNumber: "",
+        specification: "",
         categoryId: "",
+        locationId: "",
+        condition: "GOOD",
         purchaseDate: "",
         purchasePrice: "",
         description: "",
@@ -144,20 +153,58 @@ export function CreateAssetDialog({ open, onOpenChange, onSuccess, categories }:
               </div>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="category">Category *</Label>
-              <Select value={formData.categoryId} onValueChange={(value) => setFormData({ ...formData, categoryId: value })} required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="serialNumber">Serial Number</Label>
+                <Input id="serialNumber" value={formData.serialNumber} onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })} placeholder="Optional" />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="location">Location</Label>
+                <Select value={formData.locationId} onValueChange={(value) => setFormData({ ...formData, locationId: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.map((loc) => (
+                      <SelectItem key={loc.id} value={loc.id}>
+                        {loc.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="category">Category *</Label>
+                <Select value={formData.categoryId} onValueChange={(value) => setFormData({ ...formData, categoryId: value })} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="condition">Condition</Label>
+                <Select value={formData.condition} onValueChange={(value) => setFormData({ ...formData, condition: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select condition" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="GOOD">Good</SelectItem>
+                    <SelectItem value="MINOR_DAMAGE">Minor Damage</SelectItem>
+                    <SelectItem value="MAJOR_DAMAGE">Major Damage</SelectItem>
+                    <SelectItem value="TOTAL_LOSS">Total Loss</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -169,6 +216,11 @@ export function CreateAssetDialog({ open, onOpenChange, onSuccess, categories }:
                 <Label htmlFor="purchasePrice">Purchase Price</Label>
                 <Input id="purchasePrice" type="number" value={formData.purchasePrice} onChange={(e) => setFormData({ ...formData, purchasePrice: e.target.value })} placeholder="0" />
               </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="specification">Specification</Label>
+              <Textarea id="specification" value={formData.specification} onChange={(e) => setFormData({ ...formData, specification: e.target.value })} rows={2} placeholder="Brand, model, specs (optional)" />
             </div>
 
             <div className="grid gap-2">

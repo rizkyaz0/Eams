@@ -25,12 +25,13 @@ export function EditAssetDialog({ open, onOpenChange, onSuccess, asset, categori
   const [formData, setFormData] = useState({
     name: "",
     tagNumber: "",
+    serialNumber: "",
+    specification: "",
     categoryId: "",
     locationId: "",
     purchaseDate: "",
     purchasePrice: "",
     description: "",
-    status: "",
     condition: "",
   });
 
@@ -42,12 +43,13 @@ export function EditAssetDialog({ open, onOpenChange, onSuccess, asset, categori
       setFormData({
         name: asset.name || "",
         tagNumber: asset.tagNumber || "",
+        serialNumber: asset.serialNumber || "",
+        specification: asset.specification || "",
         categoryId: asset.categoryId || "",
         locationId: asset.locationId || "",
         purchaseDate: asset.purchaseDate ? asset.purchaseDate.split("T")[0] : "",
         purchasePrice: asset.purchasePrice?.toString() || "",
         description: asset.description || "",
-        status: asset.status || "",
         condition: asset.condition || "",
       });
       setImagePreview(assetImageUrl(asset.imagePath) ?? null);
@@ -191,19 +193,8 @@ export function EditAssetDialog({ open, onOpenChange, onSuccess, asset, categori
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="status">Status</Label>
-                <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="AVAILABLE">Available</SelectItem>
-                    <SelectItem value="IN_USE">In Use</SelectItem>
-                    <SelectItem value="IN_MAINTENANCE">In Maintenance</SelectItem>
-                    <SelectItem value="MISSING">Missing</SelectItem>
-                    <SelectItem value="DISPOSED">Disposed</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="serialNumber">Serial Number</Label>
+                <Input id="serialNumber" value={formData.serialNumber} onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })} />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="condition">Condition</Label>
@@ -219,6 +210,11 @@ export function EditAssetDialog({ open, onOpenChange, onSuccess, asset, categori
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="specification">Specification</Label>
+              <Textarea id="specification" value={formData.specification} onChange={(e) => setFormData({ ...formData, specification: e.target.value })} rows={2} />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
