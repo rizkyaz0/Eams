@@ -56,6 +56,13 @@ model User {
   roomUsageLogs        RoomUsageLog[]
   roomConditionReports RoomConditionReport[]
   resolvedReports      RoomConditionReport[] @relation("ReportResolver")
+  stockOpnames         StockOpname[]
+  damageReports        AssetDamageReport[]
+  resolvedDamageReports AssetDamageReport[] @relation("DamageResolver")
+  assetLoans           AssetLoan[]           @relation("LoanBorrower")
+  loanApprovals        AssetLoan[]           @relation("LoanApprover")
+  procurementRequests  ProcurementRequest[]
+  procurementApprovals ProcurementRequest[]  @relation("ProcurementApprover")
 }
 
 model Asset {
@@ -84,6 +91,9 @@ model Asset {
   location      Location?      @relation(fields: [locationId], references: [id])
   bastDetails   BastDetail[]
   maintenances  Maintenance[]
+  stockOpnameItems StockOpnameItem[]
+  damageReports AssetDamageReport[]
+  loans         AssetLoan[]
 
   @@index([tagNumber])
   @@index([status])
@@ -147,6 +157,7 @@ model Maintenance {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   asset       Asset     @relation(fields: [assetId], references: [id])
+  procurementRequests ProcurementRequest[]
 }
 
 model AuditLog {
@@ -246,4 +257,144 @@ enum ReportStatus {
   OPEN
   IN_PROGRESS
   RESOLVED
+}
+
+// ===== Stock Opname (Cek Inventaris Berkala) =====
+
+model StockOpname {
+  id          String              @id @default(cuid())
+  title       String
+  frequency   StockOpnameFrequency
+  startDate   DateTime
+  endDate     DateTime?
+  status      StockOpnameStatus   @default(SCHEDULED)
+  notes       String?
+  createdById String
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  createdBy   User                @relation(fields: [createdById], references: [id])
+  items       StockOpnameItem[]
+
+  @@index([status])
+  @@index([frequency])
+}
+
+model StockOpnameItem {
+  id            String        @id @default(cuid())
+  stockOpnameId String
+  assetId       String
+  expectedLocation String?
+  actualLocation  String?
+  expectedCondition AssetCondition?
+  actualCondition   AssetCondition?
+  isFound      Boolean?
+  notes        String?
+  checkedAt    DateTime?
+  checkedById  String?
+  stockOpname  StockOpname   @relation(fields: [stockOpnameId], references: [id], onDelete: Cascade)
+  asset        Asset         @relation(fields: [assetId], references: [id])
+
+  @@unique([stockOpnameId, assetId])
+  @@index([stockOpnameId])
+}
+
+enum StockOpnameFrequency {
+  MONTHLY
+  BIWEEKLY
+}
+
+enum StockOpnameStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+// ===== Laporan Barang Rusak =====
+
+model AssetDamageReport {
+  id           String       @id @default(cuid())
+  assetId      String
+  reportedById String
+  condition    AssetCondition
+  description  String
+  photoPath    String?
+  status       ReportStatus @default(OPEN)
+  resolvedAt   DateTime?
+  resolvedById String?
+  resolution   String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  asset        Asset        @relation(fields: [assetId], references: [id])
+  reportedBy   User         @relation(fields: [reportedById], references: [id])
+  resolvedBy   User?        @relation("DamageResolver", fields: [resolvedById], references: [id])
+
+  @@index([assetId])
+  @@index([status])
+}
+
+// ===== Peminjaman Barang =====
+
+model AssetLoan {
+  id           String     @id @default(cuid())
+  assetId      String
+  borrowerId   String
+  requestDate  DateTime   @default(now())
+  startDate    DateTime
+  endDate      DateTime
+  returnDate   DateTime?
+  status       LoanStatus @default(PENDING)
+  notes        String?
+  approvedById String?
+  approvedAt   DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  asset        Asset      @relation(fields: [assetId], references: [id])
+  borrower     User       @relation("LoanBorrower", fields: [borrowerId], references: [id])
+  approvedBy   User?      @relation("LoanApprover", fields: [approvedById], references: [id])
+
+  @@index([assetId])
+  @@index([status])
+  @@index([borrowerId])
+}
+
+enum LoanStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  ACTIVE
+  RETURNED
+  OVERDUE
+}
+
+// ===== Pengadaan untuk Service =====
+
+model ProcurementRequest {
+  id            String             @id @default(cuid())
+  maintenanceId String?
+  itemName      String
+  quantity      Int                @default(1)
+  unit          String?
+  estimatedPrice Decimal?          @db.Decimal(15, 2)
+  supplier      String?
+  status        ProcurementStatus  @default(PENDING)
+  notes         String?
+  requestedById String
+  approvedById  String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  maintenance   Maintenance?       @relation(fields: [maintenanceId], references: [id])
+  requestedBy   User               @relation(fields: [requestedById], references: [id])
+  approvedBy    User?              @relation("ProcurementApprover", fields: [approvedById], references: [id])
+
+  @@index([status])
+  @@index([maintenanceId])
+}
+
+enum ProcurementStatus {
+  PENDING
+  APPROVED
+  ORDERED
+  RECEIVED
+  CANCELLED
 }
