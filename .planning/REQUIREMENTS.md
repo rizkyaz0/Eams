@@ -9,10 +9,10 @@ Requirements untuk milestone hardening keamanan + bug fix. Setiap requirement me
 
 ### Security — Autentikasi & Registrasi
 
-- [ ] **SEC-01**: Aplikasi gagal cepat (fail-fast) saat startup jika `JWT_SECRET` tidak di-set — tanpa fallback hardcoded
-- [ ] **SEC-02**: Registrasi publik selalu membuat user dengan role `EMPLOYEE`; role dari body request dihapus (tidak di-default)
-- [ ] **SEC-03**: Verifikasi JWT mem-pin `issuer`, `audience`, `algorithms: ['HS256']`, dan `jti` (jose)
-- [ ] **SEC-04**: Token punya `tokenVersion` — password berubah / logout-all → token lama ditolak (401)
+- [x] **SEC-01**: Aplikasi gagal cepat (fail-fast) saat startup jika `JWT_SECRET` tidak di-set — tanpa fallback hardcoded
+- [x] **SEC-02**: Registrasi publik selalu membuat user dengan role `EMPLOYEE`; role dari body request dihapus (tidak di-default)
+- [x] **SEC-03**: Verifikasi JWT mem-pin `issuer`, `audience`, `algorithms: ['HS256']`, dan `jti` (jose)
+- [x] **SEC-04**: Token punya `tokenVersion` — password berubah / logout-all → token lama ditolak (401)
 - [ ] **SEC-05**: `proxy.ts` deny-by-default — semua route di bawah `(authenticated)` dan `/api/*` dilindungi kecuali allow-list publik eksplisit; layout redirect ke `/login` saat unauthenticated
 
 ### Security — Otorisasi (RBAC)
@@ -31,7 +31,7 @@ Requirements untuk milestone hardening keamanan + bug fix. Setiap requirement me
 
 ### Bugs — Identitas & BAST
 
-- [ ] **BUG-01**: `user.id` vs `user.userId` diperbaiki — index signature dihapus dari `JWTPayload` sehingga bug mati saat compile; helper `assertUser()`/`getUserIdentity()` bertipe
+- [x] **BUG-01**: `user.id` vs `user.userId` diperbaiki — index signature dihapus dari `JWTPayload` sehingga bug mati saat compile; helper `assertUser()`/`getUserIdentity()` bertipe
 - [ ] **BUG-02**: Logika BAST dikonsolidasi ke satu `lib/services/bast-service.ts` — REST handlers + server actions menjadi thin adapters; transisi per `BastType` bertipe
 - [ ] **BUG-03**: Nomor BAST dibuat atomik di dalam transaksi create (counter row + `SELECT ... FOR UPDATE` via `$queryRaw`); unique index `bastNumber` sebagai backstop
 - [ ] **BUG-04**: Separation of duties — creator tidak bisa approve BAST sendiri
@@ -83,10 +83,10 @@ Ditunda ke rilis berikutnya. Dilacak tapi tidak di roadmap saat ini.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SEC-01 | Phase 1 | Pending |
-| SEC-02 | Phase 1 | Pending |
-| SEC-03 | Phase 1 | Pending |
-| SEC-04 | Phase 1 | Pending |
+| SEC-01 | Phase 1 | Complete |
+| SEC-02 | Phase 1 | Complete |
+| SEC-03 | Phase 1 | Complete |
+| SEC-04 | Phase 1 | Complete |
 | SEC-05 | Phase 1 | Pending |
 | SEC-06 | Phase 2 | Pending |
 | SEC-07 | Phase 2 | Pending |
@@ -96,7 +96,7 @@ Ditunda ke rilis berikutnya. Dilacak tapi tidak di roadmap saat ini.
 | SEC-11 | Phase 4 | Pending |
 | SEC-12 | Phase 4 | Pending |
 | SEC-13 | Phase 4 | Pending |
-| BUG-01 | Phase 1 | Pending |
+| BUG-01 | Phase 1 | Complete |
 | BUG-02 | Phase 2 | Pending |
 | BUG-03 | Phase 3 | Pending |
 | BUG-04 | Phase 2 | Pending |
@@ -112,6 +112,7 @@ Ditunda ke rilis berikutnya. Dilacak tapi tidak di roadmap saat ini.
 | TEST-07 | Phase 5 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 27 total
 - Mapped to phases: 27
 - Unmapped: 0 ✓

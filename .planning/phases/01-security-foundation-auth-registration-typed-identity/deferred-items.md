@@ -28,3 +28,22 @@ Do not fix in-plan; carry forward to a later plan/phase.
   (orchestrator-verified) and `next build` + the running dev server prove the client is functional.
 - **Suggested follow-up:** Stop `next dev` before future `prisma generate` runs on Windows, or
   document the lock as known-good behavior.
+
+## 3. Pre-existing lint errors in plan-01-02 touched files (approve/return routes)
+
+- **Found during:** Plan 01-02 Task 3 verification (2026-08-11)
+- **Issue:** `npx eslint "app/api/bast/[id]/approve/route.ts" "app/api/assets/[id]/return/route.ts"`
+  exits 1 with **3 errors + 1 warning, all pre-existing** (not introduced by this plan's 2-line
+  changes):
+  - `approve/route.ts:39` `@typescript-eslint/no-explicit-any` — `const updateData: any = {}`
+  - `approve/route.ts:86` `@typescript-eslint/no-explicit-any` — `catch (error: any)`
+  - `return/route.ts:65` `@typescript-eslint/no-explicit-any` — `catch (error: any)`
+  - `approve/route.ts:1` `@typescript-eslint/no-unused-vars` warning — unused `NextResponse` import
+- **Why not fixed:** Plan 01-02 explicitly forbids touching the catch blocks (`error.message` leak
+  is Phase 2 SEC-09 scope: "Do NOT touch the catch block — the internal error.message leak there is
+  Phase 2 scope"). The unused-import and updateData `any` are pre-existing baseline debt
+  (scope-boundary rule: only fix issues directly caused by the current task's changes).
+- **Impact:** The plan's `npm run lint exits 0` gate passes only for the other 5 touched files;
+  these two files retain baseline errors. No functional/security impact.
+- **Suggested follow-up:** Phase 2 (SEC-09) rewrites the catch blocks anyway; fold the
+  `updateData: any` and `NextResponse` import cleanups into that same plan.
