@@ -1,209 +1,80 @@
 "use server";
 
-import db from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
-import { BastType, AssetStatus, AssetCondition } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { UserRole } from "@prisma/client";
+import { requireRoleOrThrow } from "@/lib/security";
+import {
+  createBastService,
+  approveBastService,
+  rejectBastService,
+  BastValidationError,
+  type CreateBastInput,
+} from "@/lib/services/bast-service";
 
-export type CreateBastInput = {
-  type: BastType;
-  recipientName: string;
-  recipientPosition?: string;
-  description?: string;
-  loanStartDate?: Date;
-  loanEndDate?: Date;
-  items: {
-    assetId: string;
-    conditionBefore?: AssetCondition;
-    conditionAfter: AssetCondition;
-    targetLocationId?: string;
-    targetHolderId?: string;
-    description?: string;
-  }[];
-};
+export type { CreateBastInput } from "@/lib/services/bast-service";
+export type { BastActor } from "@/lib/services/bast-service";
+
+// BAST mutations require at least STAFF_ASSET (SEC-07 role matrix).
+const BAST_MUTATION_ROLE = UserRole.STAFF_ASSET;
 
 /**
- * Create a new BAST (Handover Document)
+ * Thin adapter — Create a new BAST (Handover Document). Delegates all business
+ * logic to bast-service (BUG-02); keeps the `{ success, data }` envelope,
+ * revalidatePath, and the "Unauthorized" throw contract (R4).
  */
 export async function createBast(input: CreateBastInput) {
-  const user = await getCurrentUser();
-  if (!user) {
-    throw new Error("Unauthorized");
-  }
-
-  const { type, recipientName, recipientPosition, description, loanStartDate, loanEndDate, items } = input;
-
-  if (!type || !recipientName || !items || items.length === 0) {
-    throw new Error("Missing required fields");
-  }
+  const user = await requireRoleOrThrow(BAST_MUTATION_ROLE);
 
   try {
-    // Generate BAST Number
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-
-    const existingCount = await db.bast.count({
-      where: {
-        createdAt: {
-          gte: new Date(year, date.getMonth(), 1),
-          lt: new Date(year, date.getMonth() + 1, 1),
-        },
-      },
-    });
-
-    const bastNumber = `BAST/${year}/${month}/${String(existingCount + 1).padStart(4, "0")}`;
-
-    const bast = await db.$transaction(async (tx) => {
-      const newBast = await tx.bast.create({
-        data: {
-          bastNumber,
-          type,
-          description,
-          recipientName,
-          recipientPosition,
-          loanStartDate,
-          loanEndDate,
-          effectiveDate: new Date(),
-          creatorId: user.userId,
-          status: "PENDING",
-        },
-      });
-
-      for (const item of items) {
-        await tx.bastDetail.create({
-          data: {
-            bastId: newBast.id,
-            assetId: item.assetId,
-            conditionBefore: item.conditionBefore || AssetCondition.GOOD,
-            conditionAfter: item.conditionAfter,
-            targetLocationId: item.targetLocationId,
-            targetHolderId: item.targetHolderId,
-            description: item.description,
-          },
-        });
-      }
-
-      return newBast;
-    });
-
+    const bast = await createBastService(input, user);
     revalidatePath("/bast");
     return { success: true, data: bast };
-  } catch (error: any) {
+  } catch (error) {
+    if (error instanceof BastValidationError) {
+      return { success: false, error: error.message };
+    }
     console.error("Create BAST Action Error:", error);
     return { success: false, error: "Failed to create BAST" };
   }
 }
 
 /**
- * Approve a BAST and update asset statuses
+ * Thin adapter — Approve a BAST and update asset statuses via the service
+ * transition table.
  */
 export async function approveBast(id: string) {
-  const user = await getCurrentUser();
-  if (!user) {
-    throw new Error("Unauthorized");
-  }
+  const user = await requireRoleOrThrow(BAST_MUTATION_ROLE);
 
   try {
-    const result = await db.$transaction(async (tx) => {
-      const bast = await tx.bast.findUnique({
-        where: { id },
-        include: { details: true },
-      });
-
-      if (!bast) throw new Error("BAST not found");
-      if (bast.status !== "PENDING") throw new Error("BAST is not pending");
-
-      // Update Assets based on Type
-      for (const detail of bast.details) {
-        let updateData: any = {};
-
-        switch (bast.type) {
-          case BastType.ASSIGNMENT:
-          case BastType.PROCUREMENT:
-            updateData.status = AssetStatus.IN_USE;
-            if (detail.targetHolderId) updateData.holderId = detail.targetHolderId;
-            if (detail.targetLocationId) updateData.locationId = detail.targetLocationId;
-            break;
-          case BastType.RETURN:
-            updateData.status = AssetStatus.AVAILABLE;
-            updateData.holderId = null;
-            if (detail.targetLocationId) updateData.locationId = detail.targetLocationId;
-            break;
-          case BastType.MUTATION:
-            if (detail.targetHolderId) updateData.holderId = detail.targetHolderId;
-            if (detail.targetLocationId) updateData.locationId = detail.targetLocationId;
-            break;
-          case BastType.MAINTENANCE_OUT:
-            updateData.status = AssetStatus.IN_MAINTENANCE;
-            break;
-          case BastType.MAINTENANCE_IN:
-            updateData.status = AssetStatus.AVAILABLE;
-            break;
-          case BastType.DISPOSAL:
-            updateData.status = AssetStatus.DISPOSED;
-            updateData.holderId = null;
-            break;
-        }
-
-        // Always update condition if specified
-        updateData.condition = detail.conditionAfter;
-
-        await tx.asset.update({
-          where: { id: detail.assetId },
-          data: updateData,
-        });
-      }
-
-      const updatedBast = await tx.bast.update({
-        where: { id },
-        data: {
-          status: "APPROVED",
-          approvedAt: new Date(),
-          approverId: user.userId,
-          approverName: user.fullName,
-        },
-      });
-
-      return updatedBast;
-    });
-
+    const result = await approveBastService(id, user);
     revalidatePath("/bast");
     revalidatePath(`/bast/${id}`);
     revalidatePath("/assets");
     return { success: true, data: result };
-  } catch (error: any) {
+  } catch (error) {
+    if (error instanceof BastValidationError) {
+      return { success: false, error: error.message };
+    }
     console.error("Approve BAST Action Error:", error);
     return { success: false, error: "Failed to approve BAST" };
   }
 }
 
 /**
- * Reject a BAST
+ * Thin adapter — Reject a BAST via the service.
  */
 export async function rejectBast(id: string) {
-  const user = await getCurrentUser();
-  if (!user) {
-    throw new Error("Unauthorized");
-  }
+  const user = await requireRoleOrThrow(BAST_MUTATION_ROLE);
 
   try {
-    const bast = await db.bast.findUnique({ where: { id } });
-    if (!bast) throw new Error("BAST not found");
-    if (bast.status !== "PENDING") throw new Error("BAST is not pending");
-
-    const updatedBast = await db.bast.update({
-      where: { id },
-      data: {
-        status: "REJECTED",
-        description: bast.description ? `${bast.description} (REJECTED)` : "REJECTED",
-      },
-    });
-
+    const result = await rejectBastService(id, user);
     revalidatePath("/bast");
     revalidatePath(`/bast/${id}`);
-    return { success: true, data: updatedBast };
-  } catch (error: any) {
+    return { success: true, data: result };
+  } catch (error) {
+    if (error instanceof BastValidationError) {
+      return { success: false, error: error.message };
+    }
     console.error("Reject BAST Action Error:", error);
     return { success: false, error: "Failed to reject BAST" };
   }

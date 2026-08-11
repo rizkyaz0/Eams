@@ -4,7 +4,8 @@ import db from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { successResponse, errorResponse, unauthorizedResponse } from "@/lib/api-response";
 import { requireRole } from "@/lib/security";
-import { BastType, UserRole } from "@prisma/client";
+import { createBastService, type CreateBastInput } from "@/lib/services/bast-service";
+import { BastType, AssetCondition, UserRole } from "@prisma/client";
 
 /**
  * GET /api/bast - Get all BAST with filters and pagination
@@ -92,7 +93,7 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * POST /api/bast - Create new BAST with details
+ * POST /api/bast - Create new BAST with details (thin adapter over bast-service)
  */
 export async function POST(request: NextRequest) {
   const { user, response } = await requireRole(UserRole.STAFF_ASSET);
@@ -111,58 +112,32 @@ export async function POST(request: NextRequest) {
       return errorResponse("At least one asset is required", 400);
     }
 
-    // Auto-generate BAST number
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
+    // Map REST body onto the shared service input (BUG-02)
+    const input: CreateBastInput = {
+      type: type as BastType,
+      recipientName,
+      recipientPosition: recipientPosition || undefined,
+      description: notes || undefined,
+      items: items.map(
+        (item: {
+          assetId: string;
+          conditionBefore?: AssetCondition;
+          conditionAfter?: AssetCondition;
+          targetLocationId?: string;
+          targetHolderId?: string;
+          description?: string;
+        }) => ({
+          assetId: item.assetId,
+          conditionBefore: item.conditionBefore,
+          conditionAfter: item.conditionAfter || AssetCondition.GOOD,
+          targetLocationId: item.targetLocationId,
+          targetHolderId: item.targetHolderId,
+          description: item.description,
+        }),
+      ),
+    };
 
-    // Count existing BAsts this month to generate sequential number
-    const existingCount = await db.bast.count({
-      where: {
-        createdAt: {
-          gte: new Date(year, date.getMonth(), 1),
-          lt: new Date(year, date.getMonth() + 1, 1),
-        },
-      },
-    });
-
-    const bastNumber = `BAST/${year}/${month}/${String(existingCount + 1).padStart(4, "0")}`;
-
-    // Create BAST with details in transaction
-    const bast = await db.$transaction(async (tx) => {
-      // Create BAST
-      const newBast = await tx.bast.create({
-        data: {
-          bastNumber,
-          type: type as BastType,
-          description: notes || null,
-          recipientName,
-          recipientPosition: recipientPosition || null,
-          effectiveDate: new Date(),
-          creatorId: user.userId,
-          status: "PENDING", // Changed from DRAFT to PENDING
-        },
-      });
-
-      // Create BAST details
-      await Promise.all(
-        items.map((item: any) =>
-          tx.bastDetail.create({
-            data: {
-              bastId: newBast.id,
-              assetId: item.assetId,
-              conditionBefore: "GOOD", // Default value
-              conditionAfter: "GOOD", // Default value
-              targetLocationId: null,
-              targetHolderId: null,
-              description: null,
-            },
-          }),
-        ),
-      );
-
-      return newBast;
-    });
+    const bast = await createBastService(input, user);
 
     // Fetch complete BAST data
     const completeBast = await db.bast.findUnique({

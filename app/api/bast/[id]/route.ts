@@ -71,10 +71,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 /**
- * PATCH /api/bast/[id] - Update BAST (e.g., approve, reject)
+ * PATCH /api/bast/[id] - Update editable BAST fields only. Approve/reject were
+ * removed from PATCH (BUG-02) — they live in bast-service and are reached via
+ * /approve and /reject endpoints or the approveBast/rejectBast server actions.
+ * A strict allow-list schema replaces the raw body spread in SEC-08 (Task 6).
  */
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { user, response } = await requireRole(UserRole.STAFF_ASSET);
+  const { response } = await requireRole(UserRole.STAFF_ASSET);
   if (response) return response;
 
   try {
@@ -84,61 +87,20 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     // Check if BAST exists
     const existingBast = await db.bast.findUnique({
       where: { id },
-      include: {
-        details: true,
-      },
     });
 
     if (!existingBast) {
       return notFoundResponse("BAST not found");
     }
 
-    // If approving BAST, update all related assets
-    if (body.status === "APPROVED" && existingBast.status !== "APPROVED") {
-      await db.$transaction(async (tx) => {
-        // Update BAST
-        await tx.bast.update({
-          where: { id },
-          data: {
-            ...body,
-            approverId: user.userId,
-            effectiveDate: body.effectiveDate ? new Date(body.effectiveDate) : undefined,
-          },
-        });
-
-        // Update all assets in BAST details
-        await Promise.all(
-          existingBast.details.map(async (detail) => {
-            const updateData: any = {
-              condition: detail.conditionAfter,
-            };
-
-            if (detail.targetLocationId) {
-              updateData.locationId = detail.targetLocationId;
-            }
-
-            if (detail.targetHolderId) {
-              updateData.holderId = detail.targetHolderId;
-              updateData.status = "IN_USE";
-            }
-
-            return tx.asset.update({
-              where: { id: detail.assetId },
-              data: updateData,
-            });
-          }),
-        );
-      });
-    } else {
-      // Just update BAST without asset changes
-      await db.bast.update({
-        where: { id },
-        data: {
-          ...body,
-          effectiveDate: body.effectiveDate ? new Date(body.effectiveDate) : undefined,
-        },
-      });
-    }
+    // Update editable BAST fields (no asset transitions here)
+    await db.bast.update({
+      where: { id },
+      data: {
+        ...body,
+        effectiveDate: body.effectiveDate ? new Date(body.effectiveDate) : undefined,
+      },
+    });
 
     // Fetch updated BAST
     const updatedBast = await db.bast.findUnique({
