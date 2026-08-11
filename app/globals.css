@@ -165,6 +165,38 @@
   animation: scan-line 2s linear infinite;
 }
 
+/* Themed scrollbars — thin, token-derived (auto light/dark via CSS vars).
+   Firefox uses scrollbar-color on every element; WebKit gets matching
+   pseudo-elements. Thumb is a quiet neutral derived from --muted-foreground. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--muted-foreground) 35%, transparent) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: color-mix(in oklab, var(--muted-foreground) 30%, transparent);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in oklab, var(--muted-foreground) 55%, transparent);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 @media print {
   body {
     background: white !important;

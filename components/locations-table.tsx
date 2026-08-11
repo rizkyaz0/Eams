@@ -55,7 +55,7 @@ export function LocationsTable({ data }: LocationsTableProps) {
         <div className="flex items-center gap-2">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search locations..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 w-[250px]" />
+            <Input placeholder="Search locations..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 w-full max-w-xs" />
           </div>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
