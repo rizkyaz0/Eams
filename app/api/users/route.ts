@@ -1,23 +1,17 @@
 // app/api/users/route.ts
 import { NextRequest } from "next/server";
 import db from "@/lib/db";
-import { getCurrentUser, hashPassword, hasMinimumRole } from "@/lib/auth";
-import { successResponse, errorResponse, unauthorizedResponse, forbiddenResponse } from "@/lib/api-response";
+import { hashPassword } from "@/lib/auth";
+import { successResponse, errorResponse } from "@/lib/api-response";
+import { requireRole } from "@/lib/security";
 import { UserRole } from "@prisma/client";
 
 /**
  * GET /api/users - Get all users (Admin only)
  */
 export async function GET(request: NextRequest) {
-  const user = await getCurrentUser();
-  if (!user) {
-    return unauthorizedResponse();
-  }
-
-  // Only ADMIN and above can view all users
-  if (!hasMinimumRole(user.role, UserRole.ADMIN_INSTANSI)) {
-    return forbiddenResponse("Only admins can view all users");
-  }
+  const { response } = await requireRole(UserRole.ADMIN_INSTANSI);
+  if (response) return response;
 
   try {
     const { searchParams } = new URL(request.url);
@@ -99,15 +93,8 @@ export async function GET(request: NextRequest) {
  * POST /api/users - Create new user (Admin only)
  */
 export async function POST(request: NextRequest) {
-  const user = await getCurrentUser();
-  if (!user) {
-    return unauthorizedResponse();
-  }
-
-  // Only ADMIN and above can create users
-  if (!hasMinimumRole(user.role, UserRole.ADMIN_INSTANSI)) {
-    return forbiddenResponse("Only admins can create users");
-  }
+  const { response } = await requireRole(UserRole.ADMIN_INSTANSI);
+  if (response) return response;
 
   try {
     const body = await request.json();
