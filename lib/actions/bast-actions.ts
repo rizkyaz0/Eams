@@ -91,7 +91,7 @@ export async function createBast(input: CreateBastInput) {
     return { success: true, data: bast };
   } catch (error: any) {
     console.error("Create BAST Action Error:", error);
-    return { success: false, error: error.message };
+    return { success: false, error: "Failed to create BAST" };
   }
 }
 
@@ -174,7 +174,7 @@ export async function approveBast(id: string) {
     return { success: true, data: result };
   } catch (error: any) {
     console.error("Approve BAST Action Error:", error);
-    return { success: false, error: error.message };
+    return { success: false, error: "Failed to approve BAST" };
   }
 }
 
@@ -205,6 +205,6 @@ export async function rejectBast(id: string) {
     return { success: true, data: updatedBast };
   } catch (error: any) {
     console.error("Reject BAST Action Error:", error);
-    return { success: false, error: error.message };
+    return { success: false, error: "Failed to reject BAST" };
   }
 }

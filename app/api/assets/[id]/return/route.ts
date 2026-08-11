@@ -64,6 +64,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return successResponse(result, "BAST Return draft created successfully. Please review and approve.");
   } catch (error: any) {
     console.error("Return BAST auto-generation error:", error);
-    return errorResponse(error.message || "Failed to generate return transaction", 500);
+    return errorResponse("Failed to generate return transaction", 500);
   }
 }

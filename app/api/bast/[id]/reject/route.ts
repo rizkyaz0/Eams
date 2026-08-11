@@ -10,17 +10,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   try {
     const { id } = await params;
-    console.log("Rejecting BAST ID:", id);
 
     const bast = await prisma.bast.findUnique({ where: { id } });
-    console.log("Found BAST:", bast);
 
     if (!bast) {
-      console.log("BAST not found via prisma");
       return errorResponse("BAST not found", 404);
     }
     if (bast.status !== "PENDING") {
-      console.log("BAST not pending:", bast.status);
       return errorResponse("BAST is not pending", 400);
     }
 
@@ -34,6 +30,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     return successResponse(updatedBast);
   } catch (error: any) {
-    return errorResponse(error.message || "Failed to reject BAST");
+    return errorResponse("Failed to reject BAST", 500);
   }
 }

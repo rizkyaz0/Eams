@@ -84,6 +84,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     return successResponse(result);
   } catch (error: any) {
-    return errorResponse(error.message || "Failed to approve BAST");
+    return errorResponse("Failed to approve BAST", 500);
   }
 }
