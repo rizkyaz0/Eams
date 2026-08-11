@@ -38,13 +38,17 @@ export type CreateBastInput = {
 };
 
 /**
- * Domain validation error — carries a user-safe message. Adapters map it to
- * 400/403 (REST) or `{ success: false, error }` (server actions).
+ * Domain validation error — carries a user-safe message and an HTTP status.
+ * Adapters map it to that status (REST) or `{ success: false, error }`
+ * (server actions). BUG-04 creator checks throw with 403.
  */
 export class BastValidationError extends Error {
-  constructor(message: string) {
+  statusCode: number;
+
+  constructor(message: string, statusCode = 400) {
     super(message);
     this.name = "BastValidationError";
+    this.statusCode = statusCode;
   }
 }
 
@@ -143,6 +147,11 @@ export async function approveBastService(id: string, actor: BastActor) {
     if (!bast) throw new BastValidationError("BAST not found");
     if (bast.status !== "PENDING") throw new BastValidationError("BAST is not pending");
 
+    // Separation of duties (BUG-04): the creator cannot approve their own BAST.
+    if (bast.creatorId === actor.userId) {
+      throw new BastValidationError("Creator cannot approve their own BAST", 403);
+    }
+
     for (const detail of bast.details) {
       const updateData: Prisma.AssetUncheckedUpdateInput = {};
 
@@ -211,14 +220,15 @@ export async function approveBastService(id: string, actor: BastActor) {
  * Reject a PENDING BAST by appending "(REJECTED)" to its description.
  */
 export async function rejectBastService(id: string, actor: BastActor) {
-  // actor is reserved for the BUG-04 separation-of-duties check (Task 5):
-  // `bast.creatorId === actor.userId` → BastValidationError.
-  void actor;
-
   const bast = await db.bast.findUnique({ where: { id } });
 
   if (!bast) throw new BastValidationError("BAST not found");
   if (bast.status !== "PENDING") throw new BastValidationError("BAST is not pending");
+
+  // Separation of duties (BUG-04): the creator cannot reject their own BAST.
+  if (bast.creatorId === actor.userId) {
+    throw new BastValidationError("Creator cannot reject their own BAST", 403);
+  }
 
   return db.bast.update({
     where: { id },

@@ -18,7 +18,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return successResponse(result);
   } catch (error) {
     if (error instanceof BastValidationError) {
-      return errorResponse(error.message, 400);
+      // BUG-04: creator self-rejection carries statusCode 403 (forbidden).
+      return errorResponse(error.message, error.statusCode);
     }
     console.error("Reject BAST error:", error);
     return errorResponse("Failed to reject BAST", 500);
