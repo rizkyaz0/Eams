@@ -42,6 +42,8 @@ Siklus hidup aset tercatat dan terlacak dengan benar — dari pengadaan, serah t
 - Audit trail penuh (model AuditLog) — model ada tapi belum di-wire; ditunda setelah konsolidasi BAST
 - Halaman `/settings` & self-service pengguna — 404 saat ini, ditunda
 - Rate limiting login — ditunda ke fase lanjutan keamanan
+- Vitest + Playwright test suites (TEST-01..07) — **DEFFERED oleh keputusan developer 2026-08-11**: "skip test dulu buat kedepan". Vitest-mock-extended tidak disetujui (fase-1, blocking-human), Playwright tidak diinstal (fase-5). Verifikasi fase 1-5 memakai build gates + tsc + grep gates + live HTTP smoke + script concurrency/upload (standalone, tanpa framework test). Kapan pun disetujui, Test infra bisa dibangun dari `scripts/concurrency-bast-test.mjs` & `scripts/upload-security-test.mjs` sebagai titik awal.
+- AuditLog wiring (stretch) — tetap tertunda; tidak dijadikan bagian milestone ini
 
 ## Context
 
