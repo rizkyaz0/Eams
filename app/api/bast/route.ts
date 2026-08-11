@@ -3,7 +3,8 @@ import { NextRequest } from "next/server";
 import db from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { successResponse, errorResponse, unauthorizedResponse } from "@/lib/api-response";
-import { BastType } from "@prisma/client";
+import { requireRole } from "@/lib/security";
+import { BastType, UserRole } from "@prisma/client";
 
 /**
  * GET /api/bast - Get all BAST with filters and pagination
@@ -94,10 +95,8 @@ export async function GET(request: NextRequest) {
  * POST /api/bast - Create new BAST with details
  */
 export async function POST(request: NextRequest) {
-  const user = await getCurrentUser();
-  if (!user) {
-    return unauthorizedResponse();
-  }
+  const { user, response } = await requireRole(UserRole.STAFF_ASSET);
+  if (response) return response;
 
   try {
     const body = await request.json();

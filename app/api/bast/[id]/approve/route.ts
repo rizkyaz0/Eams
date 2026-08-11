@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { NextRequest } from "next/server";
+import { requireRole } from "@/lib/security";
 import prisma from "@/lib/db";
-import { errorResponse, successResponse, unauthorizedResponse } from "@/lib/api-response";
-import { BastType, AssetStatus } from "@prisma/client";
+import { errorResponse, successResponse } from "@/lib/api-response";
+import { BastType, AssetStatus, UserRole } from "@prisma/client";
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const user = await getCurrentUser();
-  if (!user) return unauthorizedResponse();
+  const { user, response } = await requireRole(UserRole.STAFF_ASSET);
+  if (response) return response;
 
   try {
     const { id } = await params;

@@ -1,14 +1,15 @@
 // app/api/assets/[id]/images/route.ts
 import { NextRequest } from "next/server";
 import db from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
-import { successResponse, errorResponse, unauthorizedResponse, notFoundResponse } from "@/lib/api-response";
+import { successResponse, errorResponse, notFoundResponse } from "@/lib/api-response";
+import { requireRole } from "@/lib/security";
+import { UserRole } from "@prisma/client";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const user = await getCurrentUser();
-  if (!user) return unauthorizedResponse();
+  const { response } = await requireRole(UserRole.STAFF_ASSET);
+  if (response) return response;
 
   try {
     const { id } = await params;

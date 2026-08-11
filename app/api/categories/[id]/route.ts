@@ -1,11 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { NextRequest } from "next/server";
+import { requireRole } from "@/lib/security";
 import prisma from "@/lib/db";
-import { errorResponse, successResponse, unauthorizedResponse } from "@/lib/api-response";
+import { errorResponse, successResponse } from "@/lib/api-response";
+import { UserRole } from "@prisma/client";
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const user = await getCurrentUser();
-  if (!user) return unauthorizedResponse();
+  const { response } = await requireRole(UserRole.STAFF_ASSET);
+  if (response) return response;
 
   try {
     const { id } = await params;
@@ -40,8 +41,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const user = await getCurrentUser();
-  if (!user) return unauthorizedResponse();
+  const { response } = await requireRole(UserRole.STAFF_ASSET);
+  if (response) return response;
 
   try {
     const { id } = await params;

@@ -3,6 +3,8 @@ import { NextRequest } from "next/server";
 import db from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { successResponse, errorResponse, unauthorizedResponse, notFoundResponse } from "@/lib/api-response";
+import { requireRole } from "@/lib/security";
+import { UserRole } from "@prisma/client";
 
 /**
  * GET /api/bast/[id] - Get single BAST with full details
@@ -72,10 +74,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
  * PATCH /api/bast/[id] - Update BAST (e.g., approve, reject)
  */
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const user = await getCurrentUser();
-  if (!user) {
-    return unauthorizedResponse();
-  }
+  const { user, response } = await requireRole(UserRole.STAFF_ASSET);
+  if (response) return response;
 
   try {
     const { id } = await params;
@@ -177,10 +177,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
  * DELETE /api/bast/[id] - Delete BAST (only if DRAFT)
  */
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const user = await getCurrentUser();
-  if (!user) {
-    return unauthorizedResponse();
-  }
+  const { response } = await requireRole(UserRole.STAFF_ASSET);
+  if (response) return response;
 
   try {
     const { id } = await params;

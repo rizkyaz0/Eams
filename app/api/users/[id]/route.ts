@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 import db from "@/lib/db";
 import { getCurrentUser, hashPassword, hasMinimumRole, bumpTokenVersion } from "@/lib/auth";
 import { successResponse, errorResponse, unauthorizedResponse, forbiddenResponse, notFoundResponse } from "@/lib/api-response";
+import { requireRole } from "@/lib/security";
 import { Prisma, UserRole } from "@prisma/client";
 
 /**
@@ -133,15 +134,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
  * DELETE /api/users/[id] - Delete user (Admin only)
  */
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const user = await getCurrentUser();
-  if (!user) {
-    return unauthorizedResponse();
-  }
-
-  // Only admins can delete users
-  if (!hasMinimumRole(user.role, UserRole.ADMIN_INSTANSI)) {
-    return forbiddenResponse("Only admins can delete users");
-  }
+  const { user, response } = await requireRole(UserRole.ADMIN_INSTANSI);
+  if (response) return response;
 
   try {
     const { id } = await params;

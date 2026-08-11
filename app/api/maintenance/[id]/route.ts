@@ -2,7 +2,8 @@ import { NextRequest } from "next/server";
 import prisma from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { successResponse, errorResponse, unauthorizedResponse, notFoundResponse } from "@/lib/api-response";
-import { AssetStatus } from "@prisma/client";
+import { requireRole } from "@/lib/security";
+import { AssetStatus, UserRole } from "@prisma/client";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -27,11 +28,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const user = await getCurrentUser();
-  if (!user) return unauthorizedResponse();
+  const { response } = await requireRole(UserRole.STAFF_ASSET);
+  if (response) return response;
 
   try {
+    const { id } = await params;
     const body = await request.json();
     const { status, cost, description, vendorName, startDate, endDate } = body;
 
@@ -79,11 +80,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const user = await getCurrentUser();
-  if (!user) return unauthorizedResponse();
+  const { response } = await requireRole(UserRole.STAFF_ASSET);
+  if (response) return response;
 
   try {
+    const { id } = await params;
     const currentMaintenance = await prisma.maintenance.findUnique({
       where: { id },
     });

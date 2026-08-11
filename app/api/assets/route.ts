@@ -3,7 +3,8 @@ import { NextRequest } from "next/server";
 import db from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { successResponse, errorResponse, unauthorizedResponse } from "@/lib/api-response";
-import { AssetStatus, AssetCondition } from "@prisma/client";
+import { requireRole } from "@/lib/security";
+import { AssetStatus, AssetCondition, UserRole } from "@prisma/client";
 
 /**
  * GET /api/assets - Get all assets with filters
@@ -84,10 +85,8 @@ export async function GET(request: NextRequest) {
  * POST /api/assets - Create new asset
  */
 export async function POST(request: NextRequest) {
-  const user = await getCurrentUser();
-  if (!user) {
-    return unauthorizedResponse();
-  }
+  const { response } = await requireRole(UserRole.STAFF_ASSET);
+  if (response) return response;
 
   try {
     const body = await request.json();
