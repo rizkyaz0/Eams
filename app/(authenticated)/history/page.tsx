@@ -46,11 +46,11 @@ export default async function HistoryPage() {
       id: maint.id,
       type: "MAINTENANCE",
       date: maint.createdAt.toISOString(),
-      title: `Maintenance on ${maint.asset.name}`,
+      title: `Pemeliharaan ${maint.asset.name}`,
       description: maint.description,
       user: maint.vendorName || "Internal",
       status: maint.status,
-      link: `/maintenance`, // Point to maintenance section
+      link: `/maintenance`, // Arahkan ke halaman pemeliharaan
     })),
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 

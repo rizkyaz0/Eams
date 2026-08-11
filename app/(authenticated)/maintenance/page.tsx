@@ -48,7 +48,7 @@ export default function MaintenancePage() {
   }, [page, statusFilter]);
 
   const handleDelete = async (maintenance: any) => {
-    if (!confirm(`Are you sure you want to delete maintenance record for ${maintenance.asset?.name}?`)) {
+    if (!confirm(`Apakah Anda yakin ingin menghapus catatan pemeliharaan untuk ${maintenance.asset?.name}?`)) {
       return;
     }
 
@@ -58,13 +58,13 @@ export default function MaintenancePage() {
       });
       const data = await response.json();
       if (data.success) {
-        toast.success("Maintenance record deleted successfully");
+        toast.success("Catatan pemeliharaan berhasil dihapus");
         fetchMaintenances();
       } else {
-        toast.error(data.error || "Failed to delete maintenance record");
+        toast.error(data.error || "Gagal menghapus catatan pemeliharaan");
       }
     } catch (error) {
-      toast.error("An error occurred while deleting");
+      toast.error("Terjadi kesalahan saat menghapus");
     }
   };
 
@@ -77,12 +77,12 @@ export default function MaintenancePage() {
       <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Maintenance</h1>
-            <p className="text-muted-foreground">Track and manage asset maintenance</p>
+            <h1 className="text-3xl font-bold tracking-tight">Pemeliharaan</h1>
+            <p className="text-muted-foreground">Lacak dan kelola pemeliharaan aset</p>
           </div>
           <Button onClick={() => setCreateDialogOpen(true)}>
             <Plus className="mr-2 size-4" />
-            Add Record
+            Tambah Catatan
           </Button>
         </div>
 
@@ -95,14 +95,14 @@ export default function MaintenancePage() {
             }}
           >
             <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filter by Status" />
+              <SelectValue placeholder="Filter berdasarkan Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="PENDING">Pending</SelectItem>
-              <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-              <SelectItem value="COMPLETED">Completed</SelectItem>
-              <SelectItem value="CANCELLED">Cancelled</SelectItem>
+              <SelectItem value="all">Semua Status</SelectItem>
+              <SelectItem value="PENDING">Menunggu</SelectItem>
+              <SelectItem value="IN_PROGRESS">Sedang Berjalan</SelectItem>
+              <SelectItem value="COMPLETED">Selesai</SelectItem>
+              <SelectItem value="CANCELLED">Dibatalkan</SelectItem>
             </SelectContent>
           </Select>
         </div>

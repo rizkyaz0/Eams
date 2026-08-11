@@ -52,7 +52,7 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
       label: "Aset",
       items: [
         {
-          title: "Assets",
+          title: "Aset",
           url: "/assets",
           icon: Package,
           isActive: pathname?.startsWith("/assets") || false,
@@ -85,7 +85,7 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
       label: "Pemeliharaan",
       items: [
         {
-          title: "Maintenance",
+          title: "Pemeliharaan",
           url: "/maintenance",
           icon: Wrench,
           isActive: pathname?.startsWith("/maintenance") || false,
@@ -130,28 +130,28 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
       label: "Master Data",
       items: [
         {
-          title: "Categories",
+          title: "Kategori",
           url: "/categories",
           icon: Package,
           isActive: pathname?.startsWith("/categories") || false,
           roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
         },
         {
-          title: "Locations",
+          title: "Lokasi",
           url: "/locations",
           icon: Building2,
           isActive: pathname?.startsWith("/locations") || false,
           roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
         },
         {
-          title: "Divisions",
+          title: "Divisi",
           url: "/divisions",
           icon: Building2,
           isActive: pathname?.startsWith("/divisions") || false,
           roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
         },
         {
-          title: "Users",
+          title: "Pengguna",
           url: "/users",
           icon: Users,
           isActive: pathname?.startsWith("/users") || false,
@@ -170,7 +170,7 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
           roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET", "TEKNISI"],
         },
         {
-          title: "Reports",
+          title: "Laporan",
           url: "/reports",
           icon: BarChart3,
           isActive: pathname?.startsWith("/reports") || false,
@@ -190,7 +190,7 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
 
   const navSecondary = [
     {
-      title: "Settings",
+      title: "Pengaturan",
       url: "/settings",
       icon: Settings,
       isActive: pathname?.startsWith("/settings"),
@@ -223,7 +223,7 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
             <SidebarMenuItem>
               <SidebarMenuButton onClick={() => setScannerOpen(true)} className="mt-2 text-primary hover:text-primary">
                 <QrCode className="size-5" />
-                <span>Scan Asset QR</span>
+                <span>Scan QR Aset</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

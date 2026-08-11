@@ -20,9 +20,11 @@ export default async function AuthenticatedLayout({ children }: { children: Reac
       }
     >
       <AppSidebar variant="inset" user={user} />
-      <SidebarInset>
+      <SidebarInset className="flex flex-col">
         <SiteHeader />
-        {children}
+        <main className="flex-1 overflow-auto p-4 lg:p-6">
+          {children}
+        </main>
       </SidebarInset>
     </SidebarProvider>
   );

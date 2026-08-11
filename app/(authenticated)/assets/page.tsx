@@ -126,21 +126,21 @@ export default function AssetsPage() {
       <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Assets</h1>
-            <p className="text-muted-foreground">Manage your organization's assets</p>
+            <h1 className="text-3xl font-bold tracking-tight">Aset</h1>
+            <p className="text-muted-foreground">Kelola aset organisasi Anda</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleExport}>
               <Download className="mr-2 size-4" />
-              Export
+              Ekspor
             </Button>
             <Button variant="outline" onClick={() => setScannerOpen(true)}>
               <QrCode className="mr-2 size-4" />
-              Scan Asset
+              Scan Aset
             </Button>
             <Button onClick={() => setCreateDialogOpen(true)}>
               <Plus className="mr-2 size-4" />
-              Add Asset
+              Tambah Aset
             </Button>
           </div>
         </div>
@@ -150,29 +150,29 @@ export default function AssetsPage() {
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-4">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                <Input placeholder="Search by name or tag number..." value={search} onChange={(e) => handleSearch(e.target.value)} className="pl-9" />
+                <Input placeholder="Cari nama atau tag number..." value={search} onChange={(e) => handleSearch(e.target.value)} className="pl-9" />
               </div>
               {mounted ? (
                 <>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-full md:w-[180px]">
-                      <SelectValue placeholder="All Status" />
+                      <SelectValue placeholder="Semua Status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="AVAILABLE">Available</SelectItem>
-                      <SelectItem value="IN_USE">In Use</SelectItem>
-                      <SelectItem value="IN_MAINTENANCE">Maintenance</SelectItem>
-                      <SelectItem value="MISSING">Missing</SelectItem>
-                      <SelectItem value="DISPOSED">Disposed</SelectItem>
+                      <SelectItem value="all">Semua Status</SelectItem>
+                      <SelectItem value="AVAILABLE">Tersedia</SelectItem>
+                      <SelectItem value="IN_USE">Digunakan</SelectItem>
+                      <SelectItem value="IN_MAINTENANCE">Pemeliharaan</SelectItem>
+                      <SelectItem value="MISSING">Hilang</SelectItem>
+                      <SelectItem value="DISPOSED">Disposal</SelectItem>
                     </SelectContent>
                   </Select>
                   <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                     <SelectTrigger className="w-full md:w-[180px]">
-                      <SelectValue placeholder="All Categories" />
+                      <SelectValue placeholder="Semua Kategori" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Categories</SelectItem>
+                      <SelectItem value="all">Semua Kategori</SelectItem>
                       {categories.map((cat) => (
                         <SelectItem key={cat.id} value={cat.id}>
                           {cat.name}

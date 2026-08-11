@@ -81,7 +81,7 @@ export function HistoryClient({ initialData }: { initialData: HistoryItem[] }) {
               <SelectContent>
                 <SelectItem value="ALL">Semua Tipe</SelectItem>
                 <SelectItem value="BAST">BAST</SelectItem>
-                <SelectItem value="MAINTENANCE">Maintenance</SelectItem>
+                <SelectItem value="MAINTENANCE">Pemeliharaan</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -94,7 +94,7 @@ export function HistoryClient({ initialData }: { initialData: HistoryItem[] }) {
                   <TableHead className="w-[180px]">Waktu</TableHead>
                   <TableHead>Tipe</TableHead>
                   <TableHead>Aktivitas</TableHead>
-                  <TableHead>Pelaku / User</TableHead>
+                  <TableHead>Pelaku</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
@@ -113,7 +113,7 @@ export function HistoryClient({ initialData }: { initialData: HistoryItem[] }) {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {item.type === "BAST" ? <FileText className="size-4 text-blue-500" /> : <Wrench className="size-4 text-orange-500" />}
-                          <span className="font-medium">{item.type}</span>
+                          <span className="font-medium">{item.type === "BAST" ? "BAST" : "Pemeliharaan"}</span>
                         </div>
                       </TableCell>
                       <TableCell>

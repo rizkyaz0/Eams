@@ -15,16 +15,16 @@ interface RecentBastProps {
 }
 
 const statusConfig = {
-  APPROVED: { label: "Approved", variant: "default" as const, icon: CheckCircle, color: "text-green-600" },
-  PENDING: { label: "Pending", variant: "secondary" as const, icon: Clock, color: "text-yellow-600" },
-  REJECTED: { label: "Rejected", variant: "destructive" as const, icon: XCircle, color: "text-red-600" },
-  DRAFT: { label: "Draft", variant: "outline" as const, icon: FileText, color: "text-gray-600" },
+  APPROVED: { label: "Disetujui", variant: "default" as const, icon: CheckCircle, color: "text-green-600" },
+  PENDING: { label: "Menunggu", variant: "secondary" as const, icon: Clock, color: "text-yellow-600" },
+  REJECTED: { label: "Ditolak", variant: "destructive" as const, icon: XCircle, color: "text-red-600" },
+  DRAFT: { label: "Draf", variant: "outline" as const, icon: FileText, color: "text-gray-600" },
 };
 
 const typeLabel = {
-  HANDOVER: "Handover",
-  RETURN: "Return",
-  TRANSFER: "Transfer",
+  HANDOVER: "Serah Terima",
+  RETURN: "Pengembalian",
+  TRANSFER: "Mutasi",
   DISPOSAL: "Disposal",
 };
 
@@ -33,8 +33,8 @@ export function RecentBast({ data }: RecentBastProps) {
     return (
       <Card className="mx-4 lg:mx-6">
         <CardHeader>
-          <CardTitle>Recent BAST</CardTitle>
-          <CardDescription>No recent transactions</CardDescription>
+          <CardTitle>BAST Terbaru</CardTitle>
+          <CardDescription>Belum ada transaksi terbaru</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -43,8 +43,8 @@ export function RecentBast({ data }: RecentBastProps) {
   return (
     <Card className="mx-4 lg:mx-6">
       <CardHeader>
-        <CardTitle>Recent BAST Transactions</CardTitle>
-        <CardDescription>Latest asset transaction records</CardDescription>
+        <CardTitle>Transaksi BAST Terbaru</CardTitle>
+        <CardDescription>Catatan transaksi aset terbaru</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -64,10 +64,10 @@ export function RecentBast({ data }: RecentBastProps) {
                       <Badge variant={status?.variant || "outline"}>{status?.label || bast.status}</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {typeLabel[bast.type as keyof typeof typeLabel] || bast.type} • {bast.assetCount} asset(s)
+                      {typeLabel[bast.type as keyof typeof typeLabel] || bast.type} • {bast.assetCount} aset
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      by {bast.creatorName} •{" "}
+                      oleh {bast.creatorName} •{" "}
                       {new Date(bast.createdAt).toLocaleDateString("id-ID", {
                         day: "numeric",
                         month: "short",

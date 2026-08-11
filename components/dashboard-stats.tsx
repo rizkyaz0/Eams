@@ -22,33 +22,33 @@ export function DashboardStats({ data }: DashboardStatsProps) {
 
   const stats = [
     {
-      label: "Total Assets",
+      label: "Total Aset",
       value: data.total.toLocaleString(),
-      description: `${data.recentAdditions} added this week`,
+      description: `${data.recentAdditions} ditambahkan minggu ini`,
       icon: Package,
       color: "text-blue-600",
       bgColor: "bg-blue-50 dark:bg-blue-950",
     },
     {
-      label: "Available",
+      label: "Tersedia",
       value: data.available.toLocaleString(),
-      description: "Ready for use",
+      description: "Siap digunakan",
       icon: PackageCheck,
       color: "text-green-600",
       bgColor: "bg-green-50 dark:bg-green-950",
     },
     {
-      label: "In Use",
+      label: "Digunakan",
       value: data.inUse.toLocaleString(),
-      description: "Currently assigned",
+      description: "Sedang dipinjam",
       icon: Package,
       color: "text-purple-600",
       bgColor: "bg-purple-50 dark:bg-purple-950",
     },
     {
-      label: "Maintenance",
+      label: "Pemeliharaan",
       value: data.inMaintenance.toLocaleString(),
-      description: "Under repair",
+      description: "Sedang diperbaiki",
       icon: Wrench,
       color: "text-orange-600",
       bgColor: "bg-orange-50 dark:bg-orange-950",
@@ -58,9 +58,9 @@ export function DashboardStats({ data }: DashboardStatsProps) {
   // Add missing and disposed if they exist
   if (data.missing > 0) {
     stats.push({
-      label: "Missing",
+      label: "Hilang",
       value: data.missing.toLocaleString(),
-      description: "Requires attention",
+      description: "Perlu perhatian",
       icon: AlertTriangle,
       color: "text-red-600",
       bgColor: "bg-red-50 dark:bg-red-950",

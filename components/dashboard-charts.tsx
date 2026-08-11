@@ -17,8 +17,8 @@ export function DashboardCharts({ data }: DashboardChartsProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Assets by Category</CardTitle>
-          <CardDescription>No data available</CardDescription>
+          <CardTitle>Aset per Kategori</CardTitle>
+          <CardDescription>Belum ada data</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -31,7 +31,7 @@ export function DashboardCharts({ data }: DashboardChartsProps) {
 
   const chartConfig = {
     count: {
-      label: "Assets",
+      label: "Aset",
       color: "hsl(var(--primary))",
     },
   };
@@ -39,8 +39,8 @@ export function DashboardCharts({ data }: DashboardChartsProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Assets by Category</CardTitle>
-        <CardDescription>Distribution of {data.reduce((sum, item) => sum + item.count, 0)} assets across categories</CardDescription>
+        <CardTitle>Aset per Kategori</CardTitle>
+        <CardDescription>Distribusi {data.reduce((sum, item) => sum + item.count, 0)} aset across kategori</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[300px]">

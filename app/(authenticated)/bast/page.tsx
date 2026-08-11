@@ -68,7 +68,7 @@ export default function BastPage() {
           </div>
           <Button onClick={() => setCreateDialogOpen(true)}>
             <Plus className="mr-2 size-4" />
-            Create BAST
+            Buat BAST
           </Button>
         </div>
 
@@ -77,32 +77,32 @@ export default function BastPage() {
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-4">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                <Input placeholder="Search by BAST number..." value={search} onChange={(e) => handleSearch(e.target.value)} className="pl-9" />
+                <Input placeholder="Cari nomor BAST..." value={search} onChange={(e) => handleSearch(e.target.value)} className="pl-9" />
               </div>
               {mounted ? (
                 <>
                   <Select value={typeFilter} onValueChange={setTypeFilter}>
                     <SelectTrigger className="w-full md:w-[180px]">
-                      <SelectValue placeholder="All Types" />
+                      <SelectValue placeholder="Semua Tipe" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="HANDOVER">Handover</SelectItem>
-                      <SelectItem value="RETURN">Return</SelectItem>
-                      <SelectItem value="TRANSFER">Transfer</SelectItem>
+                      <SelectItem value="all">Semua Tipe</SelectItem>
+                      <SelectItem value="HANDOVER">Serah Terima</SelectItem>
+                      <SelectItem value="RETURN">Pengembalian</SelectItem>
+                      <SelectItem value="TRANSFER">Mutasi</SelectItem>
                       <SelectItem value="DISPOSAL">Disposal</SelectItem>
                     </SelectContent>
                   </Select>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-full md:w-[180px]">
-                      <SelectValue placeholder="All Status" />
+                      <SelectValue placeholder="Semua Status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="DRAFT">Draft</SelectItem>
-                      <SelectItem value="PENDING">Pending</SelectItem>
-                      <SelectItem value="APPROVED">Approved</SelectItem>
-                      <SelectItem value="REJECTED">Rejected</SelectItem>
+                      <SelectItem value="all">Semua Status</SelectItem>
+                      <SelectItem value="DRAFT">Draf</SelectItem>
+                      <SelectItem value="PENDING">Menunggu</SelectItem>
+                      <SelectItem value="APPROVED">Disetujui</SelectItem>
+                      <SelectItem value="REJECTED">Ditolak</SelectItem>
                     </SelectContent>
                   </Select>
                 </>

@@ -32,26 +32,26 @@ export function NavMain({
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton className="bg-primary text-primary-foreground hover:bg-primary/50 relative hover:text-primary-foreground active:bg-primary/9 active:text-primary-foreground duration-200 ease-linear">
                   <IconCirclePlusFilled />
-                  <span>Quick Create</span>
+                  <span>Buat Cepat</span>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent side="right" align="start" className="w-48">
                 <DropdownMenuItem asChild>
                   <Link href="/assets?create=true" className="cursor-pointer">
                     <IconPackage className="mr-2 size-4 text-muted-foreground" />
-                    <span>New Asset</span>
+                    <span>Aset Baru</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/bast?create=true" className="cursor-pointer">
                     <IconFileText className="mr-2 size-4 text-muted-foreground" />
-                    <span>New BAST</span>
+                    <span>BAST Baru</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/users?create=true" className="cursor-pointer">
                     <IconUserPlus className="mr-2 size-4 text-muted-foreground" />
-                    <span>New User</span>
+                    <span>Pengguna Baru</span>
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>

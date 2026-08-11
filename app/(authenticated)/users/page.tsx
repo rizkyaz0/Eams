@@ -63,19 +63,19 @@ export default function UsersPage() {
       <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Users</h1>
-            <p className="text-muted-foreground">Manage system users and roles</p>
+            <h1 className="text-3xl font-bold tracking-tight">Pengguna</h1>
+            <p className="text-muted-foreground">Kelola pengguna dan peran sistem</p>
           </div>
           <Button onClick={() => setCreateDialogOpen(true)}>
             <Plus className="mr-2 size-4" />
-            Add User
+            Tambah Pengguna
           </Button>
         </div>
 
         <div className="flex flex-col gap-4 md:flex-row md:items-center">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-            <Input placeholder="Search by name, email, or NIP..." value={search} onChange={(e) => handleSearch(e.target.value)} className="pl-9 max-w-[300px]" />
+            <Input placeholder="Cari nama, email, atau NIP..." value={search} onChange={(e) => handleSearch(e.target.value)} className="pl-9 max-w-[300px]" />
           </div>
           <Select
             value={roleFilter}
@@ -85,15 +85,15 @@ export default function UsersPage() {
             }}
           >
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="All Roles" />
+              <SelectValue placeholder="Semua Peran" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Roles</SelectItem>
+              <SelectItem value="all">Semua Peran</SelectItem>
               <SelectItem value="SUPER_ADMIN">Super Admin</SelectItem>
               <SelectItem value="ADMIN_INSTANSI">Admin Instansi</SelectItem>
-              <SelectItem value="STAFF_ASSET">Staff Asset</SelectItem>
+              <SelectItem value="STAFF_ASSET">Staff Aset</SelectItem>
               <SelectItem value="TEKNISI">Teknisi</SelectItem>
-              <SelectItem value="EMPLOYEE">Employee</SelectItem>
+              <SelectItem value="EMPLOYEE">Karyawan</SelectItem>
             </SelectContent>
           </Select>
         </div>
