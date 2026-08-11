@@ -28,7 +28,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         data: {
           status: "APPROVED",
           approvedAt: new Date(),
-          approverId: user.id || null,
+          approverId: user.userId,
           approverName: user.fullName || null,
         },
       });
