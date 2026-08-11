@@ -45,6 +45,7 @@ model User {
   divisionId    String?
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
+  tokenVersion  Int        @default(0)
   assetsHeld    Asset[]    @relation("CurrentHolder")
   auditLogs     AuditLog[]
   approvedBasts Bast[]     @relation("BastApprover")
