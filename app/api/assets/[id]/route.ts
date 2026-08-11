@@ -1,10 +1,31 @@
 // app/api/assets/[id]/route.ts
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import db from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { successResponse, errorResponse, unauthorizedResponse, notFoundResponse } from "@/lib/api-response";
 import { requireRole } from "@/lib/security";
-import { AssetStatus, AssetCondition, UserRole } from "@prisma/client";
+import { AssetCondition, BastType, Prisma, UserRole } from "@prisma/client";
+import { createBastService, BastValidationError } from "@/lib/services/bast-service";
+
+// Strict allow-list of editable asset fields. `z.strictObject` rejects any
+// unknown key (status, imagePath, ...) with a 400. `status` is lifecycle-
+// governed — it only changes through BAST approval / return / maintenance /
+// disposal drafts, never directly via PATCH. `imagePath` is owned by the
+// upload route (app/api/assets/[id]/images/route.ts).
+const assetPatchSchema = z.strictObject({
+  name: z.string().min(1).optional(),
+  tagNumber: z.string().min(1).optional(),
+  serialNumber: z.string().nullable().optional(),
+  specification: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  categoryId: z.string().optional(),
+  locationId: z.string().nullable().optional(),
+  divisionId: z.string().nullable().optional(),
+  purchaseDate: z.string().optional(),
+  purchasePrice: z.number().positive().optional(),
+  condition: z.nativeEnum(AssetCondition).optional(),
+});
 
 /**
  * GET /api/assets/[id] - Get single asset
@@ -76,7 +97,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 /**
- * PATCH /api/assets/[id] - Update asset
+ * PATCH /api/assets/[id] - Update editable asset fields only, validated by a
+ * strict allow-list schema. `status` is lifecycle-governed (BAST approval /
+ * return / maintenance / disposal drafts) and `imagePath` is owned by the
+ * upload route — neither is accepted here.
  */
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { response } = await requireRole(UserRole.STAFF_ASSET);
@@ -95,23 +119,38 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return notFoundResponse("Asset not found");
     }
 
-    // Update asset
+    // Strict allow-list validation — unknown keys (status, imagePath, ...)
+    // are rejected, never silently applied.
+    const parsed = assetPatchSchema.safeParse(body);
+    if (!parsed.success) {
+      return errorResponse("Invalid asset update fields", 400);
+    }
+
+    // Build update payload from validated fields only
+    const updateData: Prisma.AssetUpdateInput = {};
+    if (parsed.data.name !== undefined) updateData.name = parsed.data.name;
+    if (parsed.data.tagNumber !== undefined) updateData.tagNumber = parsed.data.tagNumber;
+    if (parsed.data.serialNumber !== undefined) updateData.serialNumber = parsed.data.serialNumber;
+    if (parsed.data.specification !== undefined) updateData.specification = parsed.data.specification;
+    if (parsed.data.description !== undefined) updateData.description = parsed.data.description;
+    if (parsed.data.categoryId !== undefined) updateData.category = { connect: { id: parsed.data.categoryId } };
+    if (parsed.data.locationId !== undefined) {
+      updateData.location = parsed.data.locationId
+        ? { connect: { id: parsed.data.locationId } }
+        : { disconnect: true };
+    }
+    if (parsed.data.divisionId !== undefined) {
+      updateData.division = parsed.data.divisionId
+        ? { connect: { id: parsed.data.divisionId } }
+        : { disconnect: true };
+    }
+    if (parsed.data.purchaseDate !== undefined) updateData.purchaseDate = new Date(parsed.data.purchaseDate);
+    if (parsed.data.purchasePrice !== undefined) updateData.purchasePrice = parsed.data.purchasePrice;
+    if (parsed.data.condition !== undefined) updateData.condition = parsed.data.condition;
+
     const asset = await db.asset.update({
       where: { id },
-      data: {
-        name: body.name,
-        tagNumber: body.tagNumber,
-        serialNumber: body.serialNumber,
-        specification: body.specification,
-        description: body.description,
-        categoryId: body.categoryId,
-        locationId: body.locationId,
-        purchaseDate: body.purchaseDate ? new Date(body.purchaseDate) : undefined,
-        purchasePrice: body.purchasePrice,
-        imagePath: body.imagePath,
-        status: body.status,
-        condition: body.condition,
-      },
+      data: updateData,
       include: {
         category: true,
         location: true,
@@ -135,10 +174,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 }
 
 /**
- * DELETE /api/assets/[id] - Delete asset
+ * DELETE /api/assets/[id] - Create a DISPOSAL BAST draft instead of silently
+ * disposing the asset. The asset status only changes when the draft is
+ * approved (bast-service DISPOSAL transition: DISPOSED + holder=null).
  */
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { response } = await requireRole(UserRole.STAFF_ASSET);
+  const { user, response } = await requireRole(UserRole.STAFF_ASSET);
   if (response) return response;
 
   try {
@@ -147,24 +188,43 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     // Check if asset exists
     const existingAsset = await db.asset.findUnique({
       where: { id },
+      include: { holder: true },
     });
 
     if (!existingAsset) {
       return notFoundResponse("Asset not found");
     }
 
-    // Soft-Delete asset (Mark as DISPOSED)
-    await db.asset.update({
-      where: { id },
-      data: {
-        status: "DISPOSED",
-        holderId: null,
-      },
-    });
+    // Asset still held cannot be disposed — must be returned first.
+    if (existingAsset.status === "IN_USE") {
+      return errorResponse("Asset must be returned before disposal", 400);
+    }
 
-    return successResponse(null, "Asset marked as disposed successfully");
+    // Create a DISPOSAL BAST draft through the consolidated service (atomic
+    // numbering + PENDING status). Approval applies the DISPOSAL transition.
+    const result = await createBastService(
+      {
+        type: BastType.DISPOSAL,
+        description: `Disposal aset: ${existingAsset.name} (${existingAsset.tagNumber})`,
+        recipientName: existingAsset.holder?.fullName || "-",
+        recipientPosition: "Pihak Disposal",
+        items: [
+          {
+            assetId: existingAsset.id,
+            conditionBefore: existingAsset.condition,
+            conditionAfter: existingAsset.condition,
+          },
+        ],
+      },
+      { userId: user.userId, fullName: user.fullName, role: user.role }
+    );
+
+    return successResponse(result, "BAST Disposal draft created successfully. Please review and approve.");
   } catch (error) {
+    if (error instanceof BastValidationError) {
+      return errorResponse(error.message, error.statusCode);
+    }
     console.error("Delete asset error:", error);
-    return errorResponse("Failed to delete asset", 500);
+    return errorResponse("Failed to create disposal transaction", 500);
   }
 }
