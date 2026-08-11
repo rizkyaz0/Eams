@@ -106,6 +106,13 @@ model Bast {
   details            BastDetail[]
 }
 
+model BastNumberCounter {
+  id         String   @id @default(cuid())
+  period     String   @unique // "YYYY-MM" monthly sequence bucket
+  lastNumber Int      @default(0)
+  updatedAt  DateTime @updatedAt
+}
+
 model BastDetail {
   id               String          @id @default(cuid())
   bastId           String
