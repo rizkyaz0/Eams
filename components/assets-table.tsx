@@ -83,6 +83,7 @@ export function AssetsTable({ assets, loading, page, total, onPageChange, onRefr
                 <TableHead>Condition</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead>Purchase Date</TableHead>
+                <TableHead>Warranty</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -103,6 +104,15 @@ export function AssetsTable({ assets, loading, page, total, onPageChange, onRefr
                     <TableCell>{conditionConfig[asset.condition as keyof typeof conditionConfig] || asset.condition}</TableCell>
                     <TableCell>{asset.location?.name || "-"}</TableCell>
                     <TableCell>{asset.purchaseDate ? new Date(asset.purchaseDate).toLocaleDateString("id-ID") : "-"}</TableCell>
+                    <TableCell>
+                      {asset.warrantyExpiry ? (
+                        <Badge variant={new Date(asset.warrantyExpiry) < new Date() ? "destructive" : "outline"}>
+                          {new Date(asset.warrantyExpiry).toLocaleDateString("id-ID")}
+                        </Badge>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

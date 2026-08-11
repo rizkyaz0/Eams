@@ -62,6 +62,8 @@ model Asset {
   description   String?
   purchaseDate  DateTime
   purchasePrice Decimal        @db.Decimal(15, 2)
+  vendorName    String?
+  warrantyExpiry DateTime?
   imagePath     String?
   status        AssetStatus    @default(AVAILABLE)
   condition     AssetCondition @default(GOOD)

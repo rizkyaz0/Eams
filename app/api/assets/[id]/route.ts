@@ -24,6 +24,8 @@ const assetPatchSchema = z.strictObject({
   divisionId: z.string().nullable().optional(),
   purchaseDate: z.string().optional(),
   purchasePrice: z.number().positive().optional(),
+  vendorName: z.string().nullable().optional(),
+  warrantyExpiry: z.string().nullable().optional(),
   condition: z.nativeEnum(AssetCondition).optional(),
 });
 
@@ -146,6 +148,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
     if (parsed.data.purchaseDate !== undefined) updateData.purchaseDate = new Date(parsed.data.purchaseDate);
     if (parsed.data.purchasePrice !== undefined) updateData.purchasePrice = parsed.data.purchasePrice;
+    if (parsed.data.vendorName !== undefined) updateData.vendorName = parsed.data.vendorName;
+    if (parsed.data.warrantyExpiry !== undefined) {
+      updateData.warrantyExpiry = parsed.data.warrantyExpiry ? new Date(parsed.data.warrantyExpiry) : null;
+    }
     if (parsed.data.condition !== undefined) updateData.condition = parsed.data.condition;
 
     const asset = await db.asset.update({

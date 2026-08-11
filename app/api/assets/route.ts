@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { name, tagNumber, serialNumber, specification, purchaseDate, purchasePrice, imagePath, categoryId, locationId, divisionId, status, condition } = body;
+    const { name, tagNumber, serialNumber, specification, purchaseDate, purchasePrice, vendorName, warrantyExpiry, imagePath, categoryId, locationId, divisionId, status, condition } = body;
 
     // Validation
     if (!name || !tagNumber || !purchaseDate || !purchasePrice || !categoryId) {
@@ -115,6 +115,8 @@ export async function POST(request: NextRequest) {
         specification: specification || null,
         purchaseDate: new Date(purchaseDate),
         purchasePrice,
+        vendorName: vendorName || null,
+        warrantyExpiry: warrantyExpiry ? new Date(warrantyExpiry) : null,
         imagePath: imagePath || null,
         categoryId,
         locationId: locationId || null,

@@ -268,6 +268,29 @@ export default function AssetDetailPage() {
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Vendor / Supplier</p>
+                  <p className="mt-1">{asset.vendorName || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Warranty Expiry</p>
+                  <p className="mt-1">
+                    {asset.warrantyExpiry ? (
+                      <Badge variant={new Date(asset.warrantyExpiry) < new Date() ? "destructive" : "outline"} className="mt-0">
+                        {new Date(asset.warrantyExpiry).toLocaleDateString("id-ID", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </Badge>
+                    ) : (
+                      "-"
+                    )}
+                  </p>
+                </div>
+              </div>
+
               {asset.description && (
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Description</p>

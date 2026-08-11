@@ -31,6 +31,8 @@ export function EditAssetDialog({ open, onOpenChange, onSuccess, asset, categori
     locationId: "",
     purchaseDate: "",
     purchasePrice: "",
+    vendorName: "",
+    warrantyExpiry: "",
     description: "",
     condition: "",
   });
@@ -49,6 +51,8 @@ export function EditAssetDialog({ open, onOpenChange, onSuccess, asset, categori
         locationId: asset.locationId || "",
         purchaseDate: asset.purchaseDate ? asset.purchaseDate.split("T")[0] : "",
         purchasePrice: asset.purchasePrice?.toString() || "",
+        vendorName: asset.vendorName || "",
+        warrantyExpiry: asset.warrantyExpiry ? asset.warrantyExpiry.split("T")[0] : "",
         description: asset.description || "",
         condition: asset.condition || "",
       });
@@ -82,6 +86,8 @@ export function EditAssetDialog({ open, onOpenChange, onSuccess, asset, categori
           categoryId: formData.categoryId || undefined,
           locationId: formData.locationId || undefined,
           purchasePrice: formData.purchasePrice ? parseFloat(formData.purchasePrice) : undefined,
+          warrantyExpiry: formData.warrantyExpiry || null,
+          vendorName: formData.vendorName || null,
         }),
       });
 
@@ -225,6 +231,17 @@ export function EditAssetDialog({ open, onOpenChange, onSuccess, asset, categori
               <div className="grid gap-2">
                 <Label htmlFor="purchasePrice">Purchase Price</Label>
                 <Input id="purchasePrice" type="number" value={formData.purchasePrice} onChange={(e) => setFormData({ ...formData, purchasePrice: e.target.value })} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="vendorName">Vendor / Supplier</Label>
+                <Input id="vendorName" value={formData.vendorName} onChange={(e) => setFormData({ ...formData, vendorName: e.target.value })} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="warrantyExpiry">Warranty Expiry</Label>
+                <Input id="warrantyExpiry" type="date" value={formData.warrantyExpiry} onChange={(e) => setFormData({ ...formData, warrantyExpiry: e.target.value })} />
               </div>
             </div>
 
