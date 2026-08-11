@@ -20,13 +20,15 @@ model Division {
 }
 
 model Location {
-  id          String   @id @default(cuid())
-  name        String
-  address     String?
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  assets      Asset[]
+  id                   String              @id @default(cuid())
+  name                 String
+  address              String?
+  description          String?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  assets               Asset[]
+  roomUsageLogs        RoomUsageLog[]
+  roomConditionReports RoomConditionReport[]
 }
 
 model Category {
@@ -51,6 +53,9 @@ model User {
   approvedBasts Bast[]     @relation("BastApprover")
   createdBasts  Bast[]     @relation("BastCreator")
   division      Division?  @relation(fields: [divisionId], references: [id])
+  roomUsageLogs        RoomUsageLog[]
+  roomConditionReports RoomConditionReport[]
+  resolvedReports      RoomConditionReport[] @relation("ReportResolver")
 }
 
 model Asset {
@@ -190,4 +195,55 @@ enum BastType {
   MAINTENANCE_IN
   DISPOSAL
   STOCK_OPNAME
+}
+
+model RoomUsageLog {
+  id         String   @id @default(cuid())
+  locationId String
+  userId     String
+  startTime  DateTime @default(now())
+  endTime    DateTime?
+  purpose    String
+  photoPath  String?
+  notes      String?
+  createdAt  DateTime @default(now())
+  location   Location @relation(fields: [locationId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@index([locationId])
+  @@index([userId])
+}
+
+model RoomConditionReport {
+  id           String       @id @default(cuid())
+  locationId   String
+  reportedById String
+  condition    RoomCondition
+  description  String
+  photoPath    String?
+  status       ReportStatus @default(OPEN)
+  resolvedAt   DateTime?
+  resolvedById String?
+  resolution   String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  location     Location     @relation(fields: [locationId], references: [id])
+  reportedBy   User         @relation(fields: [reportedById], references: [id])
+  resolvedBy   User?        @relation("ReportResolver", fields: [resolvedById], references: [id])
+
+  @@index([locationId])
+  @@index([status])
+}
+
+enum RoomCondition {
+  GOOD
+  MINOR_DAMAGE
+  MAJOR_DAMAGE
+  NEEDS_REPAIR
+}
+
+enum ReportStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
 }
