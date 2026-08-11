@@ -3,7 +3,7 @@
 import * as React from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Package, FileText, Users, Settings, Wrench, Building2, QrCode, Activity, BarChart3, DoorOpen, ClipboardCheck } from "lucide-react";
+import { LayoutDashboard, Package, FileText, Users, Settings, Wrench, Building2, QrCode, Activity, BarChart3, DoorOpen, ClipboardCheck, PackageX, ArrowLeftRight, ShoppingCart } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
@@ -22,122 +22,171 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
     setMounted(true);
   }, []);
 
-  const navMain = [
+  type NavItem = {
+    title: string;
+    url: string;
+    icon: any;
+    isActive: boolean;
+    roles: string[];
+  };
+
+  type NavGroupDef = {
+    label?: string;
+    items: NavItem[];
+  };
+
+  const navGroups: NavGroupDef[] = [
     {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: LayoutDashboard,
-      isActive: pathname === "/dashboard",
-      roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET", "TEKNISI", "EMPLOYEE"],
+      // Dashboard stands alone at top — no group label
+      items: [
+        {
+          title: "Dashboard",
+          url: "/dashboard",
+          icon: LayoutDashboard,
+          isActive: pathname === "/dashboard",
+          roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET", "TEKNISI", "EMPLOYEE"],
+        },
+      ],
     },
     {
-      title: "Assets",
-      url: "/assets",
-      icon: Package,
-      isActive: pathname?.startsWith("/assets"),
-      roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
+      label: "Aset",
+      items: [
+        {
+          title: "Assets",
+          url: "/assets",
+          icon: Package,
+          isActive: pathname?.startsWith("/assets") || false,
+          roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
+        },
+        {
+          title: "BAST",
+          url: "/bast",
+          icon: FileText,
+          isActive: pathname?.startsWith("/bast") || false,
+          roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET", "EMPLOYEE"],
+        },
+        {
+          title: "Peminjaman",
+          url: "/asset-loans",
+          icon: ArrowLeftRight,
+          isActive: pathname?.startsWith("/asset-loans") || false,
+          roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
+        },
+        {
+          title: "Barang Rusak",
+          url: "/damage-reports",
+          icon: PackageX,
+          isActive: pathname?.startsWith("/damage-reports") || false,
+          roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
+        },
+      ],
     },
     {
-      title: "BAST",
-      url: "/bast",
-      icon: FileText,
-      isActive: pathname?.startsWith("/bast"),
-      roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET", "EMPLOYEE"],
+      label: "Pemeliharaan",
+      items: [
+        {
+          title: "Maintenance",
+          url: "/maintenance",
+          icon: Wrench,
+          isActive: pathname?.startsWith("/maintenance") || false,
+          roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET", "TEKNISI"],
+        },
+        {
+          title: "Pengadaan",
+          url: "/procurement",
+          icon: ShoppingCart,
+          isActive: pathname?.startsWith("/procurement") || false,
+          roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
+        },
+        {
+          title: "Stock Opname",
+          url: "/stock-opname",
+          icon: ClipboardCheck,
+          isActive: pathname?.startsWith("/stock-opname") || false,
+          roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
+        },
+      ],
     },
     {
-      title: "Maintenance",
-      url: "/maintenance",
-      icon: Wrench,
-      isActive: pathname?.startsWith("/maintenance"),
-      roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET", "TEKNISI"],
+      label: "Ruangan",
+      items: [
+        {
+          title: "Penggunaan Ruangan",
+          url: "/room-usage",
+          icon: DoorOpen,
+          isActive: pathname?.startsWith("/room-usage") || false,
+          roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
+        },
+        {
+          title: "Laporan Kondisi",
+          url: "/room-reports",
+          icon: ClipboardCheck,
+          isActive: pathname?.startsWith("/room-reports") || false,
+          roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
+        },
+      ],
     },
     {
-      title: "Categories",
-      url: "/categories",
-      icon: Package,
-      isActive: pathname?.startsWith("/categories"),
-      roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
+      label: "Master Data",
+      items: [
+        {
+          title: "Categories",
+          url: "/categories",
+          icon: Package,
+          isActive: pathname?.startsWith("/categories") || false,
+          roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
+        },
+        {
+          title: "Locations",
+          url: "/locations",
+          icon: Building2,
+          isActive: pathname?.startsWith("/locations") || false,
+          roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
+        },
+        {
+          title: "Divisions",
+          url: "/divisions",
+          icon: Building2,
+          isActive: pathname?.startsWith("/divisions") || false,
+          roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
+        },
+        {
+          title: "Users",
+          url: "/users",
+          icon: Users,
+          isActive: pathname?.startsWith("/users") || false,
+          roles: ["SUPER_ADMIN", "ADMIN_INSTANSI"],
+        },
+      ],
     },
     {
-      title: "Locations",
-      url: "/locations",
-      icon: Building2,
-      isActive: pathname?.startsWith("/locations"),
-      roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
-    },
-    {
-      title: "Divisions",
-      url: "/divisions",
-      icon: Building2,
-      isActive: pathname?.startsWith("/divisions"),
-      roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
-    },
-    {
-      title: "Penggunaan Ruangan",
-      url: "/room-usage",
-      icon: DoorOpen,
-      isActive: pathname?.startsWith("/room-usage"),
-      roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
-    },
-    {
-      title: "Laporan Kondisi",
-      url: "/room-reports",
-      icon: ClipboardCheck,
-      isActive: pathname?.startsWith("/room-reports"),
-      roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
-    },
-    {
-      title: "Stock Opname",
-      url: "/stock-opname",
-      icon: ClipboardCheck,
-      isActive: pathname?.startsWith("/stock-opname"),
-      roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
-    },
-    {
-      title: "Barang Rusak",
-      url: "/damage-reports",
-      icon: Package,
-      isActive: pathname?.startsWith("/damage-reports"),
-      roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
-    },
-    {
-      title: "Peminjaman",
-      url: "/asset-loans",
-      icon: Package,
-      isActive: pathname?.startsWith("/asset-loans"),
-      roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
-    },
-    {
-      title: "Pengadaan",
-      url: "/procurement",
-      icon: Package,
-      isActive: pathname?.startsWith("/procurement"),
-      roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
-    },
-    {
-      title: "Users",
-      url: "/users",
-      icon: Users,
-      isActive: pathname?.startsWith("/users"),
-      roles: ["SUPER_ADMIN", "ADMIN_INSTANSI"],
-    },
-    {
-      title: "Riwayat",
-      url: "/history",
-      icon: Activity,
-      isActive: pathname?.startsWith("/history"),
-      roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET", "TEKNISI"],
-    },
-    {
-      title: "Reports",
-      url: "/reports",
-      icon: BarChart3,
-      isActive: pathname?.startsWith("/reports"),
-      roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
+      label: "Laporan",
+      items: [
+        {
+          title: "Riwayat",
+          url: "/history",
+          icon: Activity,
+          isActive: pathname?.startsWith("/history") || false,
+          roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET", "TEKNISI"],
+        },
+        {
+          title: "Reports",
+          url: "/reports",
+          icon: BarChart3,
+          isActive: pathname?.startsWith("/reports") || false,
+          roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
+        },
+      ],
     },
   ];
 
-  const filteredNavMain = navMain.filter((item) => !item.roles || !userRole || item.roles.includes(userRole));
+  // Filter items by role within each group; drop empty groups
+  const filteredGroups = navGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => !item.roles || !userRole || item.roles.includes(userRole)),
+    }))
+    .filter((group) => group.items.length > 0);
 
   const navSecondary = [
     {
@@ -180,7 +229,7 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
           </SidebarMenu>
         </SidebarHeader>
         <SidebarContent>
-          <NavMain items={filteredNavMain} />
+          <NavMain groups={filteredGroups} />
           <NavSecondary items={navSecondary} className="mt-auto" />
         </SidebarContent>
         <SidebarFooter>
