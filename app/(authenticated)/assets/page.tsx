@@ -94,7 +94,13 @@ export default function AssetsPage() {
           rows.push([asset.tagNumber, asset.name, asset.category?.name || "-", asset.status, asset.condition, asset.location?.name || "-", asset.purchaseDate ? new Date(asset.purchaseDate).toLocaleDateString("id-ID") : "-"]);
         });
 
-        const csvContent = "data:text/csv;charset=utf-8," + rows.map((e) => e.join(",")).join("\n");
+        // Formula-injection guard: prefix cells that start with = + - @ tab or CR
+        // with a single quote so spreadsheet formulas are never executed (CSV hardening).
+        const csvCell = (value: string) => {
+          const sanitized = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+          return /[",\n]/.test(sanitized) ? `"${sanitized.replace(/"/g, '""')}"` : sanitized;
+        };
+        const csvContent = "data:text/csv;charset=utf-8," + rows.map((e) => e.map(csvCell).join(",")).join("\n");
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);

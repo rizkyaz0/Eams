@@ -11,7 +11,7 @@ antigravity/
 │   ├── db.ts                         # Prisma Client singleton
 │   ├── auth.ts                       # JWT & password utilities
 │   └── api-response.ts               # Standardized API responses
-├── middleware.ts                     # Route protection middleware
+├── proxy.ts                         # Route protection (Next.js 16 proxy/middleware)
 ├── prisma/
 │   ├── schema.prisma                 # Database schema (9 models)
 │   └── prisma.config.ts              # Prisma 7 config
@@ -46,7 +46,7 @@ antigravity/
 - ✅ JWT-based authentication
 - ✅ Role-based access control (RBAC)
 - ✅ Password hashing with bcryptjs
-- ✅ Protected routes middleware
+- ✅ Protected routes (proxy.ts)
 - ✅ Cookie-based session management
 
 ### Core APIs
@@ -106,7 +106,7 @@ antigravity/
 - ✅ HTTP-only secure cookies
 - ✅ Password hashing (bcrypt, 12 rounds)
 - ✅ Role hierarchy validation
-- ✅ Protected routes middleware
+- ✅ Protected routes (proxy.ts)
 - ✅ Input validation
 - ✅ SQL injection prevention (Prisma ORM)
 
