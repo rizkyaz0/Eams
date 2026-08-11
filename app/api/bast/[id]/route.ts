@@ -1,10 +1,24 @@
 // app/api/bast/[id]/route.ts
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import db from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { successResponse, errorResponse, unauthorizedResponse, notFoundResponse } from "@/lib/api-response";
 import { requireRole } from "@/lib/security";
-import { UserRole } from "@prisma/client";
+import { Prisma, UserRole } from "@prisma/client";
+
+// SEC-08: strict allow-list of editable BAST fields. `z.strictObject` rejects
+// any unknown key (status, bastNumber, type, approverId, ...) with a 400 —
+// attempts to move a BAST through its lifecycle via PATCH no longer silently
+// apply. Lifecycle moves happen through /approve + /reject (or server actions).
+const bastPatchSchema = z.strictObject({
+  description: z.string().nullable().optional(),
+  recipientName: z.string().nullable().optional(),
+  recipientPosition: z.string().nullable().optional(),
+  loanStartDate: z.string().nullable().optional(),
+  loanEndDate: z.string().nullable().optional(),
+  effectiveDate: z.string().optional(),
+});
 
 /**
  * GET /api/bast/[id] - Get single BAST with full details
@@ -71,10 +85,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 /**
- * PATCH /api/bast/[id] - Update editable BAST fields only. Approve/reject were
- * removed from PATCH (BUG-02) — they live in bast-service and are reached via
+ * PATCH /api/bast/[id] - Update editable BAST fields only, validated by a
+ * strict allow-list schema (SEC-08). Approve/reject live in bast-service via
  * /approve and /reject endpoints or the approveBast/rejectBast server actions.
- * A strict allow-list schema replaces the raw body spread in SEC-08 (Task 6).
  */
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { response } = await requireRole(UserRole.STAFF_ASSET);
@@ -93,13 +106,25 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return notFoundResponse("BAST not found");
     }
 
-    // Update editable BAST fields (no asset transitions here)
+    // Strict allow-list validation — unknown keys (status, bastNumber, type,
+    // approverId, approvedAt, ...) are rejected, never silently applied.
+    const parsed = bastPatchSchema.safeParse(body);
+    if (!parsed.success) {
+      return errorResponse("Invalid BAST update fields", 400);
+    }
+
+    // Build update payload from validated fields only
+    const updateData: Prisma.BastUpdateInput = {};
+    if (parsed.data.description !== undefined) updateData.description = parsed.data.description;
+    if (parsed.data.recipientName !== undefined) updateData.recipientName = parsed.data.recipientName;
+    if (parsed.data.recipientPosition !== undefined) updateData.recipientPosition = parsed.data.recipientPosition;
+    if (parsed.data.loanStartDate !== undefined) updateData.loanStartDate = parsed.data.loanStartDate ? new Date(parsed.data.loanStartDate) : null;
+    if (parsed.data.loanEndDate !== undefined) updateData.loanEndDate = parsed.data.loanEndDate ? new Date(parsed.data.loanEndDate) : null;
+    if (parsed.data.effectiveDate !== undefined) updateData.effectiveDate = new Date(parsed.data.effectiveDate);
+
     await db.bast.update({
       where: { id },
-      data: {
-        ...body,
-        effectiveDate: body.effectiveDate ? new Date(body.effectiveDate) : undefined,
-      },
+      data: updateData,
     });
 
     // Fetch updated BAST
