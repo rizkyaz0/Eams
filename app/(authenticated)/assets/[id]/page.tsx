@@ -12,6 +12,7 @@ import { DeleteAssetDialog } from "@/components/delete-asset-dialog";
 import { toast } from "sonner";
 import { AssetLabel } from "@/components/asset-label";
 import { Label } from "@/components/ui/label";
+import { assetImageUrl } from "@/lib/utils";
 
 export default function AssetDetailPage() {
   const params = useParams();
@@ -186,7 +187,7 @@ export default function AssetDetailPage() {
                 {/* Asset Image Section */}
                 <div className="relative group w-full md:w-48 aspect-square shrink-0 rounded-lg border-2 border-dashed border-muted-foreground/20 bg-muted/30 overflow-hidden flex items-center justify-center">
                   {asset.imagePath ? (
-                    <img src={asset.imagePath} alt={asset.name} className="w-full h-full object-cover" />
+                    <img src={assetImageUrl(asset.imagePath)} alt={asset.name} className="w-full h-full object-cover" />
                   ) : (
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <ImageIcon className="size-10 opacity-20" />

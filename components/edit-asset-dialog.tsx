@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Camera } from "lucide-react";
 import { toast } from "sonner";
+import { assetImageUrl } from "@/lib/utils";
 
 interface EditAssetDialogProps {
   open: boolean;
@@ -49,7 +50,7 @@ export function EditAssetDialog({ open, onOpenChange, onSuccess, asset, categori
         status: asset.status || "",
         condition: asset.condition || "",
       });
-      setImagePreview(asset.imagePath || null);
+      setImagePreview(assetImageUrl(asset.imagePath) ?? null);
     }
   }, [asset]);
 
