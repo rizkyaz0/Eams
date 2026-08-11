@@ -27,8 +27,13 @@ The journey runs in strict dependency order: trustworthy auth + typed identity f
   3. Tokens with the wrong issuer, audience, or algorithm are rejected; changing a password or logout-all invalidates previously issued tokens (401).
   4. Unauthenticated users opening any protected route are redirected to `/login`, and direct calls to protected `/api/*` endpoints return 401 (deny-by-default proxy matcher).
   5. The Vitest suite runs and auth tests pass: missing env throws, wrong iss/aud rejected, register-with-SUPER_ADMIN stored as EMPLOYEE.
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
+
+Plans:
+- [ ] 01-01-PLAN.md — Fail-fast env guard, tokenVersion schema, Prisma alignment, deny-by-default proxy gate
+- [ ] 01-02-PLAN.md — Typed identity, pinned tokens, registration role pin, revocation wiring, BUG-01 fixes
+- [ ] 01-03-PLAN.md — Vitest infrastructure + auth unit tests
 
 ### Phase 2: BAST Consolidation & Authorization Rollout
 **Goal**: All BAST business logic lives in one typed service with legal transitions per BastType and separation of duties, and every mutating endpoint/server action (assets, bast, maintenance, categories, locations, divisions) enforces roles through a single `requireUser()`/`requireRole()` choke point with generic error responses. This phase kills the largest HIGH finding (missing role checks) and the behavioral divergence between REST and server-action BAST paths.
