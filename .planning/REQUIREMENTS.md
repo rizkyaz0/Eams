@@ -24,10 +24,10 @@ Requirements untuk milestone hardening keamanan + bug fix. Setiap requirement me
 
 ### Security — Upload
 
-- [ ] **SEC-10**: Upload gambar divalidasi magic bytes (file-type) dengan allowlist `jpeg|png|webp`; `image/svg+xml` ditolak
-- [ ] **SEC-11**: Upload dibatasi ukuran 5 MB → 413; endpoint upload di-gate role (STAFF_ASSET minimum)
-- [ ] **SEC-12**: File disimpan di luar `public/` (`<root>/uploads/assets/`) dengan nama acak server-side
-- [ ] **SEC-13**: File disajikan via route terautentikasi dengan path-traversal guard, `Content-Type`/`Content-Disposition` tervalidasi, dan `nosniff`
+- [x] **SEC-10**: Upload gambar divalidasi magic bytes (file-type) dengan allowlist `jpeg|png|webp`; `image/svg+xml` ditolak
+- [x] **SEC-11**: Upload dibatasi ukuran 5 MB → 413; endpoint upload di-gate role (STAFF_ASSET minimum)
+- [x] **SEC-12**: File disimpan di luar `public/` (`<root>/uploads/assets/`) dengan nama acak server-side
+- [x] **SEC-13**: File disajikan via route terautentikasi dengan path-traversal guard, `Content-Type`/`Content-Disposition` tervalidasi, dan `nosniff`
 
 ### Bugs — Identitas & BAST
 
@@ -48,7 +48,7 @@ Requirements untuk milestone hardening keamanan + bug fix. Setiap requirement me
 - [x] **TEST-02**: Unit test auth: env hilang → throw; iss/aud salah → ditolak; register dengan SUPER_ADMIN → tersimpan EMPLOYEE
 - [x] **TEST-03**: Unit test RBAC matrix (empat cabang per mutasi: anonymous→401, role salah→403, wrong-owner→ditolak, admin→200)
 - [x] **TEST-04**: Test BAST workflow: transisi legal mencatat approver; transisi ilegal menulis nol baris; REST vs server action menghasilkan outcome identik (invariant test)
-- [ ] **TEST-05**: Test upload: svg ditolak, >5MB → 413, anonymous/employee → 401/403, tidak bisa diakses via URL statis
+- [x] **TEST-05**: Test upload: svg ditolak, >5MB → 413, anonymous/employee → 401/403, tidak bisa diakses via URL statis
 - [x] **TEST-06**: Test konkurensi numbering: 12 create paralel → 12 nomor unik, nol 500
 - [ ] **TEST-07**: Playwright E2E di `next build && next start` dengan test DB terpisah (login → register-EMPLOYEE → mutasi admin → 403; BAST create → approve → custody update)
 
@@ -92,10 +92,10 @@ Ditunda ke rilis berikutnya. Dilacak tapi tidak di roadmap saat ini.
 | SEC-07 | Phase 2 | Complete |
 | SEC-08 | Phase 2 | Complete |
 | SEC-09 | Phase 2 | Complete |
-| SEC-10 | Phase 4 | Pending |
-| SEC-11 | Phase 4 | Pending |
-| SEC-12 | Phase 4 | Pending |
-| SEC-13 | Phase 4 | Pending |
+| SEC-10 | Phase 4 | Complete |
+| SEC-11 | Phase 4 | Complete |
+| SEC-12 | Phase 4 | Complete |
+| SEC-13 | Phase 4 | Complete |
 | BUG-01 | Phase 1 | Complete |
 | BUG-02 | Phase 2 | Complete |
 | BUG-03 | Phase 3 | Complete |
@@ -107,7 +107,7 @@ Ditunda ke rilis berikutnya. Dilacak tapi tidak di roadmap saat ini.
 | TEST-02 | Phase 1 | Complete |
 | TEST-03 | Phase 2 | Complete |
 | TEST-04 | Phase 2 | Complete |
-| TEST-05 | Phase 4 | Pending |
+| TEST-05 | Phase 4 | Complete |
 | TEST-06 | Phase 3 | Complete |
 | TEST-07 | Phase 5 | Pending |
 
