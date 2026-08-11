@@ -17,10 +17,10 @@ Requirements untuk milestone hardening keamanan + bug fix. Setiap requirement me
 
 ### Security — Otorisasi (RBAC)
 
-- [ ] **SEC-06**: Helper `requireUser()` (401) dan `requireRole(min)` (403) di `lib/security.ts` sebagai satu titik penegakan
-- [ ] **SEC-07**: Semua endpoint mutasi (assets, bast, maintenance, categories, locations, divisions) + server actions memanggil `requireRole()` sesuai role matrix
-- [ ] **SEC-08**: `PATCH /api/bast/[id]` tidak lagi menyebar body mentah (`{ ...body }`) — hanya field allow-list via zod `.strict()`
-- [ ] **SEC-09**: Respons error generik — tidak membocorkan `error.message` internal ke klien
+- [x] **SEC-06**: Helper `requireUser()` (401) dan `requireRole(min)` (403) di `lib/security.ts` sebagai satu titik penegakan
+- [x] **SEC-07**: Semua endpoint mutasi (assets, bast, maintenance, categories, locations, divisions) + server actions memanggil `requireRole()` sesuai role matrix
+- [x] **SEC-08**: `PATCH /api/bast/[id]` tidak lagi menyebar body mentah (`{ ...body }`) — hanya field allow-list via zod `.strict()`
+- [x] **SEC-09**: Respons error generik — tidak membocorkan `error.message` internal ke klien
 
 ### Security — Upload
 
@@ -32,24 +32,24 @@ Requirements untuk milestone hardening keamanan + bug fix. Setiap requirement me
 ### Bugs — Identitas & BAST
 
 - [x] **BUG-01**: `user.id` vs `user.userId` diperbaiki — index signature dihapus dari `JWTPayload` sehingga bug mati saat compile; helper `assertUser()`/`getUserIdentity()` bertipe
-- [ ] **BUG-02**: Logika BAST dikonsolidasi ke satu `lib/services/bast-service.ts` — REST handlers + server actions menjadi thin adapters; transisi per `BastType` bertipe
-- [ ] **BUG-03**: Nomor BAST dibuat atomik di dalam transaksi create (counter row + `SELECT ... FOR UPDATE` via `$queryRaw`); unique index `bastNumber` sebagai backstop
-- [ ] **BUG-04**: Separation of duties — creator tidak bisa approve BAST sendiri
-- [ ] **BUG-05**: `approverId`/`approverName` tercatat benar saat approval (pakai `user.userId`)
+- [x] **BUG-02**: Logika BAST dikonsolidasi ke satu `lib/services/bast-service.ts` — REST handlers + server actions menjadi thin adapters; transisi per `BastType` bertipe
+- [x] **BUG-03**: Nomor BAST dibuat atomik di dalam transaksi create (counter row + `SELECT ... FOR UPDATE` via `$queryRaw`); unique index `bastNumber` sebagai backstop
+- [x] **BUG-04**: Separation of duties — creator tidak bisa approve BAST sendiri
+- [x] **BUG-05**: `approverId`/`approverName` tercatat benar saat approval (pakai `user.userId`)
 
 ### Data & Seed
 
-- [ ] **DATA-01**: Seed idempotent berbasis upsert — `TRUNCATE ... CASCADE` raw-SQL destruktif dihapus
+- [x] **DATA-01**: Seed idempotent berbasis upsert — `TRUNCATE ... CASCADE` raw-SQL destruktif dihapus
 - [x] **DATA-02**: Versi Prisma CLI (6.19.3) dan client (6.19.0) diselaraskan
 
 ### Testing
 
 - [x] **TEST-01**: Infrastruktur Vitest + vitest-mock-extended terpasang (setup: redirect mock melempar, mock `next/headers`, `mockDeep<PrismaClient>`)
 - [x] **TEST-02**: Unit test auth: env hilang → throw; iss/aud salah → ditolak; register dengan SUPER_ADMIN → tersimpan EMPLOYEE
-- [ ] **TEST-03**: Unit test RBAC matrix (empat cabang per mutasi: anonymous→401, role salah→403, wrong-owner→ditolak, admin→200)
-- [ ] **TEST-04**: Test BAST workflow: transisi legal mencatat approver; transisi ilegal menulis nol baris; REST vs server action menghasilkan outcome identik (invariant test)
+- [x] **TEST-03**: Unit test RBAC matrix (empat cabang per mutasi: anonymous→401, role salah→403, wrong-owner→ditolak, admin→200)
+- [x] **TEST-04**: Test BAST workflow: transisi legal mencatat approver; transisi ilegal menulis nol baris; REST vs server action menghasilkan outcome identik (invariant test)
 - [ ] **TEST-05**: Test upload: svg ditolak, >5MB → 413, anonymous/employee → 401/403, tidak bisa diakses via URL statis
-- [ ] **TEST-06**: Test konkurensi numbering: 12 create paralel → 12 nomor unik, nol 500
+- [x] **TEST-06**: Test konkurensi numbering: 12 create paralel → 12 nomor unik, nol 500
 - [ ] **TEST-07**: Playwright E2E di `next build && next start` dengan test DB terpisah (login → register-EMPLOYEE → mutasi admin → 403; BAST create → approve → custody update)
 
 ## v2 Requirements
@@ -88,27 +88,27 @@ Ditunda ke rilis berikutnya. Dilacak tapi tidak di roadmap saat ini.
 | SEC-03 | Phase 1 | Complete |
 | SEC-04 | Phase 1 | Complete |
 | SEC-05 | Phase 1 | Complete |
-| SEC-06 | Phase 2 | Pending |
-| SEC-07 | Phase 2 | Pending |
-| SEC-08 | Phase 2 | Pending |
-| SEC-09 | Phase 2 | Pending |
+| SEC-06 | Phase 2 | Complete |
+| SEC-07 | Phase 2 | Complete |
+| SEC-08 | Phase 2 | Complete |
+| SEC-09 | Phase 2 | Complete |
 | SEC-10 | Phase 4 | Pending |
 | SEC-11 | Phase 4 | Pending |
 | SEC-12 | Phase 4 | Pending |
 | SEC-13 | Phase 4 | Pending |
 | BUG-01 | Phase 1 | Complete |
-| BUG-02 | Phase 2 | Pending |
-| BUG-03 | Phase 3 | Pending |
-| BUG-04 | Phase 2 | Pending |
-| BUG-05 | Phase 2 | Pending |
-| DATA-01 | Phase 3 | Pending |
+| BUG-02 | Phase 2 | Complete |
+| BUG-03 | Phase 3 | Complete |
+| BUG-04 | Phase 2 | Complete |
+| BUG-05 | Phase 2 | Complete |
+| DATA-01 | Phase 3 | Complete |
 | DATA-02 | Phase 1 | Complete |
 | TEST-01 | Phase 1 | Complete |
 | TEST-02 | Phase 1 | Complete |
-| TEST-03 | Phase 2 | Pending |
-| TEST-04 | Phase 2 | Pending |
+| TEST-03 | Phase 2 | Complete |
+| TEST-04 | Phase 2 | Complete |
 | TEST-05 | Phase 4 | Pending |
-| TEST-06 | Phase 3 | Pending |
+| TEST-06 | Phase 3 | Complete |
 | TEST-07 | Phase 5 | Pending |
 
 **Coverage:**
