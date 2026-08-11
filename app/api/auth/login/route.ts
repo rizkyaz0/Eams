@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
       email: user.email,
       role: user.role,
       fullName: user.fullName,
+      tokenVersion: user.tokenVersion,
     });
 
     // Set cookie

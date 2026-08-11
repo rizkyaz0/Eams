@@ -8,7 +8,7 @@ import { UserRole } from "@prisma/client";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password, fullName, nip, role, divisionId } = body;
+    const { email, password, fullName, nip, divisionId } = body;
 
     // Validation
     if (!email || !password || !fullName) {
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         password: hashedPassword,
         fullName,
         nip: nip || null,
-        role: (role as UserRole) || UserRole.EMPLOYEE,
+        role: UserRole.EMPLOYEE, // Self-registration can never elevate (SEC-02)
         divisionId: divisionId || null,
       },
       include: {
@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
       email: user.email,
       role: user.role,
       fullName: user.fullName,
+      tokenVersion: user.tokenVersion,
     });
 
     // Set cookie

@@ -1,9 +1,9 @@
 // app/api/users/[id]/route.ts
 import { NextRequest } from "next/server";
 import db from "@/lib/db";
-import { getCurrentUser, hashPassword, hasMinimumRole } from "@/lib/auth";
+import { getCurrentUser, hashPassword, hasMinimumRole, bumpTokenVersion } from "@/lib/auth";
 import { successResponse, errorResponse, unauthorizedResponse, forbiddenResponse, notFoundResponse } from "@/lib/api-response";
-import { UserRole } from "@prisma/client";
+import { Prisma, UserRole } from "@prisma/client";
 
 /**
  * GET /api/users/[id] - Get single user
@@ -84,7 +84,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     // Prepare update data
-    const updateData: any = {};
+    const updateData: Prisma.UserUncheckedUpdateInput = {};
 
     if (body.fullName) updateData.fullName = body.fullName;
     if (body.nip) updateData.nip = body.nip;
@@ -96,8 +96,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     // If password is being changed
+    let passwordChanged = false;
     if (body.password) {
       updateData.password = await hashPassword(body.password);
+      passwordChanged = true;
     }
 
     // Update user
@@ -114,6 +116,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         updatedAt: true,
       },
     });
+
+    // Password change revokes all previously issued sessions (SEC-04)
+    if (passwordChanged) {
+      await bumpTokenVersion(id);
+    }
 
     return successResponse(updatedUser, "User updated successfully");
   } catch (error) {
