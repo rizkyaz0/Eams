@@ -42,5 +42,8 @@ next-env.d.ts
 
 /app/generated/prisma
 
+# Server-generated uploads (secure-uploads, SEC-12)
+/uploads/
+
 /.lcm
 /.opencode
