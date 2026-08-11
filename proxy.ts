@@ -3,54 +3,34 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyToken } from "./lib/auth";
 
-// Routes yang memerlukan authentication
-const protectedRoutes = ["/dashboard", "/api/assets", "/api/users", "/api/bast", "/api/maintenance", "/api/categories", "/api/divisions", "/api/locations"];
-
-// Routes yang hanya bisa diakses saat belum login
-const authRoutes = ["/login", "/register"];
+// Every entry in this set is a deliberate public route — exact match only.
+const PUBLIC_PATHS = new Set(["/", "/login", "/register", "/api/auth/login", "/api/auth/register"]);
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for auth login/register API
-  if (pathname === "/api/auth/login" || pathname === "/api/auth/register") {
+  // Public allow-list: pass through without a token
+  if (PUBLIC_PATHS.has(pathname)) {
     return NextResponse.next();
   }
 
   // Get token from cookie
   const token = request.cookies.get("auth-token");
 
-  // Check if route is protected
-  const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
-  const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
-
-  // Verify token if exists
+  // Verify token if present — stateless JWT verification only, no DB read (fast gate)
   let user = null;
   if (token) {
     user = await verifyToken(token.value);
   }
 
-  // Redirect to login if accessing protected route without valid token
-  if (isProtectedRoute && !user) {
+  // Deny-by-default: unauthenticated requests are rejected
+  if (!user) {
     if (pathname.startsWith("/api")) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
     const url = new URL("/login", request.url);
     url.searchParams.set("redirect", pathname);
     return NextResponse.redirect(url);
-  }
-
-  // Redirect to dashboard if accessing auth routes with valid token
-  if (isAuthRoute && user) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
-
-  // Add user to headers for API routes
-  if (user && pathname.startsWith("/api")) {
-    const response = NextResponse.next();
-    response.headers.set("x-user-id", user.userId);
-    response.headers.set("x-user-role", user.role);
-    return response;
   }
 
   return NextResponse.next();
