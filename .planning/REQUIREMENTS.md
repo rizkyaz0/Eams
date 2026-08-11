@@ -50,7 +50,7 @@ Requirements untuk milestone hardening keamanan + bug fix. Setiap requirement me
 - [x] **TEST-04**: Test BAST workflow: transisi legal mencatat approver; transisi ilegal menulis nol baris; REST vs server action menghasilkan outcome identik (invariant test)
 - [x] **TEST-05**: Test upload: svg ditolak, >5MB → 413, anonymous/employee → 401/403, tidak bisa diakses via URL statis
 - [x] **TEST-06**: Test konkurensi numbering: 12 create paralel → 12 nomor unik, nol 500
-- [ ] **TEST-07**: Playwright E2E di `next build && next start` dengan test DB terpisah (login → register-EMPLOYEE → mutasi admin → 403; BAST create → approve → custody update)
+- [x] **TEST-07**: Playwright E2E di `next build && next start` dengan test DB terpisah (login → register-EMPLOYEE → mutasi admin → 403; BAST create → approve → custody update)
 
 ## v2 Requirements
 
@@ -109,7 +109,7 @@ Ditunda ke rilis berikutnya. Dilacak tapi tidak di roadmap saat ini.
 | TEST-04 | Phase 2 | Complete |
 | TEST-05 | Phase 4 | Complete |
 | TEST-06 | Phase 3 | Complete |
-| TEST-07 | Phase 5 | Pending |
+| TEST-07 | Phase 5 | Complete |
 
 **Coverage:**
 

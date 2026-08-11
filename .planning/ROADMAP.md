@@ -12,7 +12,7 @@ The journey runs in strict dependency order: trustworthy auth + typed identity f
 - [x] **Phase 2: BAST Consolidation & Authorization Rollout** - Single BAST service, role enforcement on every mutation, mass-assignment fix, generic errors (completed 2026-08-11)
 - [x] **Phase 3: Atomic Numbering & Transaction Hygiene** - Race-free BAST numbers, idempotent seed, concurrency proof (completed 2026-08-11)
 - [x] **Phase 4: Secure Uploads** - Magic-byte validation, 5 MB cap, storage outside `public/`, authenticated serving (completed 2026-08-11)
-- [ ] **Phase 5: Test Completion & Closing Hardening Tasks** - Production-build E2E suite, full coverage mandate, residual closeout
+- [x] **Phase 5: Test Completion & Closing Hardening Tasks** - Production-build E2E suite, full coverage mandate, residual closeout (completed 2026-08-11)
 
 ## Phase Details
 
@@ -109,7 +109,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. BAST Consolidation & Authorization Rollout | 1/1 | Complete    | 2026-08-11 |
 | 3. Atomic Numbering & Transaction Hygiene | 1/1 | Complete    | 2026-08-11 |
 | 4. Secure Uploads | 1/1 | Complete    | 2026-08-11 |
-| 5. Test Completion & Closing Hardening Tasks | TBD | Not started | - |
+| 5. Test Completion & Closing Hardening Tasks | 1/0 | Complete    | 2026-08-11 |
 
 ---
 *Roadmap created: 2026-08-10*
