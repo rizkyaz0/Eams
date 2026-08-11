@@ -26,13 +26,13 @@ export function DeleteCategoryDialog({ open, onOpenChange, onSuccess, category }
       const data = await response.json();
 
       if (data.success) {
-        toast.success("Category deleted successfully");
+        toast.success("Kategori berhasil dihapus");
         onSuccess();
       } else {
-        toast.error(data.error || "Failed to delete category");
+        toast.error(data.error || "Gagal menghapus kategori");
       }
     } catch (error) {
-      toast.error("An error occurred");
+      toast.error("Terjadi kesalahan");
     } finally {
       setLoading(false);
     }
@@ -42,19 +42,19 @@ export function DeleteCategoryDialog({ open, onOpenChange, onSuccess, category }
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Delete Category</DialogTitle>
+          <DialogTitle>Hapus Kategori</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete <span className="font-semibold">{category?.name}</span>? This action cannot be undone.
+            Apakah Anda yakin ingin menghapus <span className="font-semibold">{category?.name}</span>? Tindakan ini tidak dapat dibatalkan.
           </DialogDescription>
         </DialogHeader>
-        <div className="bg-destructive/10 p-4 rounded-md text-destructive text-sm font-medium">Warning: You cannot delete a category if it has assets assigned to it.</div>
+        <div className="bg-destructive/10 p-4 rounded-md text-destructive text-sm font-medium">Peringatan: Anda tidak dapat menghapus kategori yang masih memiliki aset.</div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-            Cancel
+            Batal
           </Button>
           <Button variant="destructive" onClick={onDelete} disabled={loading}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Delete
+            Hapus
           </Button>
         </DialogFooter>
       </DialogContent>

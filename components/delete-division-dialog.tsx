@@ -26,13 +26,13 @@ export function DeleteDivisionDialog({ open, onOpenChange, onSuccess, division }
       const data = await response.json();
 
       if (data.success) {
-        toast.success("Division deleted successfully");
+        toast.success("Divisi berhasil dihapus");
         onSuccess();
       } else {
-        toast.error(data.error || "Failed to delete division");
+        toast.error(data.error || "Gagal menghapus divisi");
       }
     } catch (error) {
-      toast.error("An error occurred");
+      toast.error("Terjadi kesalahan");
     } finally {
       setLoading(false);
     }
@@ -42,19 +42,19 @@ export function DeleteDivisionDialog({ open, onOpenChange, onSuccess, division }
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Delete Division</DialogTitle>
+          <DialogTitle>Hapus Divisi</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete <span className="font-semibold">{division?.name}</span>? This action cannot be undone.
+            Apakah Anda yakin ingin menghapus <span className="font-semibold">{division?.name}</span>? Tindakan ini tidak dapat dibatalkan.
           </DialogDescription>
         </DialogHeader>
-        <div className="bg-destructive/10 p-4 rounded-md text-destructive text-sm font-medium">Warning: You cannot delete a division if it has users or assets assigned to it.</div>
+        <div className="bg-destructive/10 p-4 rounded-md text-destructive text-sm font-medium">Peringatan: Anda tidak dapat menghapus divisi yang masih memiliki pengguna atau aset.</div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-            Cancel
+            Batal
           </Button>
           <Button variant="destructive" onClick={onDelete} disabled={loading}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Delete
+            Hapus
           </Button>
         </DialogFooter>
       </DialogContent>

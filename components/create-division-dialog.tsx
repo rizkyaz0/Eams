@@ -14,10 +14,10 @@ import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   code: z.string().min(2, {
-    message: "Division code must be at least 2 characters.",
+    message: "Kode divisi minimal 2 karakter.",
   }),
   name: z.string().min(2, {
-    message: "Division name must be at least 2 characters.",
+    message: "Nama divisi minimal 2 karakter.",
   }),
   description: z.string().optional(),
 });
@@ -52,14 +52,14 @@ export function CreateDivisionDialog({ open, onOpenChange, onSuccess }: CreateDi
       const data = await response.json();
 
       if (data.success) {
-        toast.success("Division created successfully");
+        toast.success("Divisi berhasil dibuat");
         form.reset();
         onSuccess();
       } else {
-        toast.error(data.error || "Failed to create division");
+        toast.error(data.error || "Gagal membuat divisi");
       }
     } catch (error) {
-      toast.error("An error occurred");
+      toast.error("Terjadi kesalahan");
     } finally {
       setLoading(false);
     }
@@ -69,8 +69,8 @@ export function CreateDivisionDialog({ open, onOpenChange, onSuccess }: CreateDi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Create Division</DialogTitle>
-          <DialogDescription>Add a new division.</DialogDescription>
+          <DialogTitle>Buat Divisi</DialogTitle>
+          <DialogDescription>Tambahkan divisi baru.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -79,9 +79,9 @@ export function CreateDivisionDialog({ open, onOpenChange, onSuccess }: CreateDi
               name="code"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Code</FormLabel>
+                  <FormLabel>Kode</FormLabel>
                   <FormControl>
-                    <Input placeholder="IT, HR, FIN" {...field} />
+                    <Input placeholder="IT, SDM, KEU" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -92,9 +92,9 @@ export function CreateDivisionDialog({ open, onOpenChange, onSuccess }: CreateDi
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>Nama</FormLabel>
                   <FormControl>
-                    <Input placeholder="Information Technology" {...field} />
+                    <Input placeholder="Teknologi Informasi" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -105,9 +105,9 @@ export function CreateDivisionDialog({ open, onOpenChange, onSuccess }: CreateDi
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Deskripsi</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Optional details..." {...field} />
+                    <Textarea placeholder="Detail opsional..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -115,11 +115,11 @@ export function CreateDivisionDialog({ open, onOpenChange, onSuccess }: CreateDi
             />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-                Cancel
+                Batal
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create
+                Buat
               </Button>
             </DialogFooter>
           </form>

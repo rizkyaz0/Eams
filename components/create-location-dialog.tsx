@@ -14,7 +14,7 @@ import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, {
-    message: "Location name must be at least 2 characters.",
+    message: "Nama lokasi minimal 2 karakter.",
   }),
   address: z.string().optional(),
   description: z.string().optional(),
@@ -50,14 +50,14 @@ export function CreateLocationDialog({ open, onOpenChange, onSuccess }: CreateLo
       const data = await response.json();
 
       if (data.success) {
-        toast.success("Location created successfully");
+        toast.success("Lokasi berhasil dibuat");
         form.reset();
         onSuccess();
       } else {
-        toast.error(data.error || "Failed to create location");
+        toast.error(data.error || "Gagal membuat lokasi");
       }
     } catch (error) {
-      toast.error("An error occurred");
+      toast.error("Terjadi kesalahan");
     } finally {
       setLoading(false);
     }
@@ -67,8 +67,8 @@ export function CreateLocationDialog({ open, onOpenChange, onSuccess }: CreateLo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Create Location</DialogTitle>
-          <DialogDescription>Add a new location.</DialogDescription>
+          <DialogTitle>Buat Lokasi</DialogTitle>
+          <DialogDescription>Tambahkan lokasi baru.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -77,9 +77,9 @@ export function CreateLocationDialog({ open, onOpenChange, onSuccess }: CreateLo
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>Nama</FormLabel>
                   <FormControl>
-                    <Input placeholder="Main Office, Warehouse A" {...field} />
+                    <Input placeholder="Kantor Pusat, Gudang A" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -90,9 +90,9 @@ export function CreateLocationDialog({ open, onOpenChange, onSuccess }: CreateLo
               name="address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Address</FormLabel>
+                  <FormLabel>Alamat</FormLabel>
                   <FormControl>
-                    <Input placeholder="123 Street, City" {...field} />
+                    <Input placeholder="Jalan Merdeka No. 1, Jakarta" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -103,9 +103,9 @@ export function CreateLocationDialog({ open, onOpenChange, onSuccess }: CreateLo
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Deskripsi</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Optional details..." {...field} />
+                    <Textarea placeholder="Detail opsional..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -113,11 +113,11 @@ export function CreateLocationDialog({ open, onOpenChange, onSuccess }: CreateLo
             />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-                Cancel
+                Batal
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create
+                Buat
               </Button>
             </DialogFooter>
           </form>

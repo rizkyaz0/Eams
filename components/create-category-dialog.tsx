@@ -13,7 +13,7 @@ import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, {
-    message: "Category name must be at least 2 characters.",
+    message: "Nama kategori minimal 2 karakter.",
   }),
 });
 
@@ -45,14 +45,14 @@ export function CreateCategoryDialog({ open, onOpenChange, onSuccess }: CreateCa
       const data = await response.json();
 
       if (data.success) {
-        toast.success("Category created successfully");
+        toast.success("Kategori berhasil dibuat");
         form.reset();
         onSuccess();
       } else {
-        toast.error(data.error || "Failed to create category");
+        toast.error(data.error || "Gagal membuat kategori");
       }
     } catch (error) {
-      toast.error("An error occurred");
+      toast.error("Terjadi kesalahan");
     } finally {
       setLoading(false);
     }
@@ -62,8 +62,8 @@ export function CreateCategoryDialog({ open, onOpenChange, onSuccess }: CreateCa
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Create Category</DialogTitle>
-          <DialogDescription>Add a new asset category.</DialogDescription>
+          <DialogTitle>Buat Kategori</DialogTitle>
+          <DialogDescription>Tambahkan kategori aset baru.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -72,9 +72,9 @@ export function CreateCategoryDialog({ open, onOpenChange, onSuccess }: CreateCa
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>Nama</FormLabel>
                   <FormControl>
-                    <Input placeholder="Electronics, Furniture, etc." {...field} />
+                    <Input placeholder="Elektronik, Furnitur, dll." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -82,11 +82,11 @@ export function CreateCategoryDialog({ open, onOpenChange, onSuccess }: CreateCa
             />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-                Cancel
+                Batal
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create
+                Buat
               </Button>
             </DialogFooter>
           </form>

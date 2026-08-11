@@ -13,7 +13,7 @@ import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, {
-    message: "Category name must be at least 2 characters.",
+    message: "Nama kategori minimal 2 karakter.",
   }),
 });
 
@@ -54,13 +54,13 @@ export function EditCategoryDialog({ open, onOpenChange, onSuccess, category }: 
       const data = await response.json();
 
       if (data.success) {
-        toast.success("Category updated successfully");
+        toast.success("Kategori berhasil diperbarui");
         onSuccess();
       } else {
-        toast.error(data.error || "Failed to update category");
+        toast.error(data.error || "Gagal memperbarui kategori");
       }
     } catch (error) {
-      toast.error("An error occurred");
+      toast.error("Terjadi kesalahan");
     } finally {
       setLoading(false);
     }
@@ -70,8 +70,8 @@ export function EditCategoryDialog({ open, onOpenChange, onSuccess, category }: 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Edit Category</DialogTitle>
-          <DialogDescription>Update category details.</DialogDescription>
+          <DialogTitle>Edit Kategori</DialogTitle>
+          <DialogDescription>Perbarui detail kategori.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -80,9 +80,9 @@ export function EditCategoryDialog({ open, onOpenChange, onSuccess, category }: 
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>Nama</FormLabel>
                   <FormControl>
-                    <Input placeholder="Category Name" {...field} />
+                    <Input placeholder="Nama Kategori" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -90,11 +90,11 @@ export function EditCategoryDialog({ open, onOpenChange, onSuccess, category }: 
             />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-                Cancel
+                Batal
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Changes
+                Simpan Perubahan
               </Button>
             </DialogFooter>
           </form>

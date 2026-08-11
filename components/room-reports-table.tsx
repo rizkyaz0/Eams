@@ -119,7 +119,7 @@ export function RoomReportsTable({ data }: RoomReportsTableProps) {
             {filteredData.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="h-24 text-center">
-                  Tidak ada laporan.
+                  Tidak ada data.
                 </TableCell>
               </TableRow>
             ) : (

@@ -14,7 +14,7 @@ import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, {
-    message: "Location name must be at least 2 characters.",
+    message: "Nama lokasi minimal 2 karakter.",
   }),
   address: z.string().optional(),
   description: z.string().optional(),
@@ -61,13 +61,13 @@ export function EditLocationDialog({ open, onOpenChange, onSuccess, location }: 
       const data = await response.json();
 
       if (data.success) {
-        toast.success("Location updated successfully");
+        toast.success("Lokasi berhasil diperbarui");
         onSuccess();
       } else {
-        toast.error(data.error || "Failed to update location");
+        toast.error(data.error || "Gagal memperbarui lokasi");
       }
     } catch (error) {
-      toast.error("An error occurred");
+      toast.error("Terjadi kesalahan");
     } finally {
       setLoading(false);
     }
@@ -77,8 +77,8 @@ export function EditLocationDialog({ open, onOpenChange, onSuccess, location }: 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Edit Location</DialogTitle>
-          <DialogDescription>Update location details.</DialogDescription>
+          <DialogTitle>Edit Lokasi</DialogTitle>
+          <DialogDescription>Perbarui detail lokasi.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -87,9 +87,9 @@ export function EditLocationDialog({ open, onOpenChange, onSuccess, location }: 
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>Nama</FormLabel>
                   <FormControl>
-                    <Input placeholder="Location Name" {...field} />
+                    <Input placeholder="Nama Lokasi" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -100,9 +100,9 @@ export function EditLocationDialog({ open, onOpenChange, onSuccess, location }: 
               name="address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Address</FormLabel>
+                  <FormLabel>Alamat</FormLabel>
                   <FormControl>
-                    <Input placeholder="Address" {...field} />
+                    <Input placeholder="Alamat" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -113,9 +113,9 @@ export function EditLocationDialog({ open, onOpenChange, onSuccess, location }: 
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Deskripsi</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Description" {...field} />
+                    <Textarea placeholder="Deskripsi" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -123,11 +123,11 @@ export function EditLocationDialog({ open, onOpenChange, onSuccess, location }: 
             />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-                Cancel
+                Batal
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Changes
+                Simpan Perubahan
               </Button>
             </DialogFooter>
           </form>

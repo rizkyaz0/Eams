@@ -23,7 +23,7 @@ export default async function CategoriesPage() {
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Categories</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Kategori</h1>
       </div>
       <CategoriesTable data={categories} />
     </div>

@@ -14,10 +14,10 @@ import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   code: z.string().min(2, {
-    message: "Division code must be at least 2 characters.",
+    message: "Kode divisi minimal 2 karakter.",
   }),
   name: z.string().min(2, {
-    message: "Division name must be at least 2 characters.",
+    message: "Nama divisi minimal 2 karakter.",
   }),
   description: z.string().optional(),
 });
@@ -63,13 +63,13 @@ export function EditDivisionDialog({ open, onOpenChange, onSuccess, division }: 
       const data = await response.json();
 
       if (data.success) {
-        toast.success("Division updated successfully");
+        toast.success("Divisi berhasil diperbarui");
         onSuccess();
       } else {
-        toast.error(data.error || "Failed to update division");
+        toast.error(data.error || "Gagal memperbarui divisi");
       }
     } catch (error) {
-      toast.error("An error occurred");
+      toast.error("Terjadi kesalahan");
     } finally {
       setLoading(false);
     }
@@ -79,8 +79,8 @@ export function EditDivisionDialog({ open, onOpenChange, onSuccess, division }: 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Edit Division</DialogTitle>
-          <DialogDescription>Update division details.</DialogDescription>
+          <DialogTitle>Edit Divisi</DialogTitle>
+          <DialogDescription>Perbarui detail divisi.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -89,9 +89,9 @@ export function EditDivisionDialog({ open, onOpenChange, onSuccess, division }: 
               name="code"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Code</FormLabel>
+                  <FormLabel>Kode</FormLabel>
                   <FormControl>
-                    <Input placeholder="Division Code" {...field} />
+                    <Input placeholder="Kode Divisi" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -102,9 +102,9 @@ export function EditDivisionDialog({ open, onOpenChange, onSuccess, division }: 
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>Nama</FormLabel>
                   <FormControl>
-                    <Input placeholder="Division Name" {...field} />
+                    <Input placeholder="Nama Divisi" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -115,9 +115,9 @@ export function EditDivisionDialog({ open, onOpenChange, onSuccess, division }: 
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Deskripsi</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Description" {...field} />
+                    <Textarea placeholder="Deskripsi" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -125,11 +125,11 @@ export function EditDivisionDialog({ open, onOpenChange, onSuccess, division }: 
             />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-                Cancel
+                Batal
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Changes
+                Simpan Perubahan
               </Button>
             </DialogFooter>
           </form>

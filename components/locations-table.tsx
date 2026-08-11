@@ -55,11 +55,11 @@ export function LocationsTable({ data }: LocationsTableProps) {
         <div className="flex items-center gap-2">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search locations..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 w-full max-w-xs" />
+            <Input placeholder="Cari lokasi..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 w-full max-w-xs" />
           </div>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Add Location
+          <Plus className="mr-2 h-4 w-4" /> Tambah Lokasi
         </Button>
       </div>
 
@@ -67,18 +67,18 @@ export function LocationsTable({ data }: LocationsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Address</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead className="text-center">Total Assets</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Nama</TableHead>
+              <TableHead>Alamat</TableHead>
+              <TableHead>Deskripsi</TableHead>
+              <TableHead className="text-center">Total Aset</TableHead>
+              <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredData.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center">
-                  No results.
+                  Tidak ada data.
                 </TableCell>
               </TableRow>
             ) : (
@@ -92,18 +92,18 @@ export function LocationsTable({ data }: LocationsTableProps) {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
+                          <span className="sr-only">Buka menu</span>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuLabel>Aksi</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => handleEdit(location)}>
                           <Pencil className="mr-2 h-4 w-4" /> Edit
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => handleDelete(location)} className="text-red-600 focus:text-red-600">
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
+                          <Trash2 className="mr-2 h-4 w-4" /> Hapus
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
