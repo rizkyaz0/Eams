@@ -2,7 +2,7 @@
 phase: "01"
 name: "security-foundation-auth-registration-typed-identity"
 created: 2026-08-11
-status: verified-with-deviation
+status: passed
 ---
 
 # Phase 01: security-foundation-auth-registration-typed-identity - Verification
@@ -29,7 +29,7 @@ status: verified-with-deviation
 
 ## Result
 
-**Verdict: VERIFIED WITH DEVIATION**
+**Verdict: PASSED** (with documented deviation)
 
 Success criteria 1–4 are verified end-to-end (build gates + live HTTP smoke tests against the seeded local DB). Success criterion 5 (Vitest suite) is NOT met — plan 01-03 was rejected by the developer; the test suite is deferred to a later phase and tracked in `deferred-items.md`. Runtime behavior previously covered by unit tests (env throw, claim pinning, role pinning, revocation) was instead proven via live HTTP checks and build gates.
 

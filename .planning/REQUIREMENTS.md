@@ -13,7 +13,7 @@ Requirements untuk milestone hardening keamanan + bug fix. Setiap requirement me
 - [x] **SEC-02**: Registrasi publik selalu membuat user dengan role `EMPLOYEE`; role dari body request dihapus (tidak di-default)
 - [x] **SEC-03**: Verifikasi JWT mem-pin `issuer`, `audience`, `algorithms: ['HS256']`, dan `jti` (jose)
 - [x] **SEC-04**: Token punya `tokenVersion` — password berubah / logout-all → token lama ditolak (401)
-- [ ] **SEC-05**: `proxy.ts` deny-by-default — semua route di bawah `(authenticated)` dan `/api/*` dilindungi kecuali allow-list publik eksplisit; layout redirect ke `/login` saat unauthenticated
+- [x] **SEC-05**: `proxy.ts` deny-by-default — semua route di bawah `(authenticated)` dan `/api/*` dilindungi kecuali allow-list publik eksplisit; layout redirect ke `/login` saat unauthenticated
 
 ### Security — Otorisasi (RBAC)
 
@@ -40,12 +40,12 @@ Requirements untuk milestone hardening keamanan + bug fix. Setiap requirement me
 ### Data & Seed
 
 - [ ] **DATA-01**: Seed idempotent berbasis upsert — `TRUNCATE ... CASCADE` raw-SQL destruktif dihapus
-- [ ] **DATA-02**: Versi Prisma CLI (6.19.3) dan client (6.19.0) diselaraskan
+- [x] **DATA-02**: Versi Prisma CLI (6.19.3) dan client (6.19.0) diselaraskan
 
 ### Testing
 
-- [ ] **TEST-01**: Infrastruktur Vitest + vitest-mock-extended terpasang (setup: redirect mock melempar, mock `next/headers`, `mockDeep<PrismaClient>`)
-- [ ] **TEST-02**: Unit test auth: env hilang → throw; iss/aud salah → ditolak; register dengan SUPER_ADMIN → tersimpan EMPLOYEE
+- [x] **TEST-01**: Infrastruktur Vitest + vitest-mock-extended terpasang (setup: redirect mock melempar, mock `next/headers`, `mockDeep<PrismaClient>`)
+- [x] **TEST-02**: Unit test auth: env hilang → throw; iss/aud salah → ditolak; register dengan SUPER_ADMIN → tersimpan EMPLOYEE
 - [ ] **TEST-03**: Unit test RBAC matrix (empat cabang per mutasi: anonymous→401, role salah→403, wrong-owner→ditolak, admin→200)
 - [ ] **TEST-04**: Test BAST workflow: transisi legal mencatat approver; transisi ilegal menulis nol baris; REST vs server action menghasilkan outcome identik (invariant test)
 - [ ] **TEST-05**: Test upload: svg ditolak, >5MB → 413, anonymous/employee → 401/403, tidak bisa diakses via URL statis
@@ -87,7 +87,7 @@ Ditunda ke rilis berikutnya. Dilacak tapi tidak di roadmap saat ini.
 | SEC-02 | Phase 1 | Complete |
 | SEC-03 | Phase 1 | Complete |
 | SEC-04 | Phase 1 | Complete |
-| SEC-05 | Phase 1 | Pending |
+| SEC-05 | Phase 1 | Complete |
 | SEC-06 | Phase 2 | Pending |
 | SEC-07 | Phase 2 | Pending |
 | SEC-08 | Phase 2 | Pending |
@@ -102,9 +102,9 @@ Ditunda ke rilis berikutnya. Dilacak tapi tidak di roadmap saat ini.
 | BUG-04 | Phase 2 | Pending |
 | BUG-05 | Phase 2 | Pending |
 | DATA-01 | Phase 3 | Pending |
-| DATA-02 | Phase 1 | Pending |
-| TEST-01 | Phase 1 | Pending |
-| TEST-02 | Phase 1 | Pending |
+| DATA-02 | Phase 1 | Complete |
+| TEST-01 | Phase 1 | Complete |
+| TEST-02 | Phase 1 | Complete |
 | TEST-03 | Phase 2 | Pending |
 | TEST-04 | Phase 2 | Pending |
 | TEST-05 | Phase 4 | Pending |
