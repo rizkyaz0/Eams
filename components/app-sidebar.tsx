@@ -66,6 +66,13 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
       roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
     },
     {
+      title: "Divisions",
+      url: "/divisions",
+      icon: Building2,
+      isActive: pathname?.startsWith("/divisions"),
+      roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
+    },
+    {
       title: "Users",
       url: "/users",
       icon: Users,
