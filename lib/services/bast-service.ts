@@ -67,18 +67,38 @@ export async function createBastService(input: CreateBastInput, actor: BastActor
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
 
-  const existingCount = await db.bast.count({
-    where: {
-      createdAt: {
-        gte: new Date(year, date.getMonth(), 1),
-        lt: new Date(year, date.getMonth() + 1, 1),
-      },
-    },
-  });
-
-  const bastNumber = `BAST/${year}/${month}/${String(existingCount + 1).padStart(4, "0")}`;
-
+  // Atomic BAST numbering (BUG-03): the monthly sequence lives in the
+  // BastNumberCounter row. Concurrent creates for the same month serialize on
+  // `SELECT ... FOR UPDATE` inside this transaction — the second caller blocks
+  // until the first commits, then reads the incremented value. The
+  // `bastNumber @unique` index on Bast remains as the backstop; a collision
+  // would now only be possible via schema/counter drift, not a race.
   return db.$transaction(async (tx) => {
+    const period = `${year}-${month}`;
+
+    // Ensure the monthly counter row exists (idempotent) — concurrent callers
+    // converge on the same row.
+    await tx.bastNumberCounter.upsert({
+      where: { period },
+      create: { period, lastNumber: 0 },
+      update: {},
+    });
+
+    // Row lock: serializes concurrent creates for this month. The second
+    // concurrent transaction blocks here until the first commits, then reads
+    // the incremented value — no duplicate numbers possible (BUG-03).
+    const [counterRow] = await tx.$queryRaw<
+      Array<{ lastNumber: number }>
+    >`SELECT "lastNumber" FROM "BastNumberCounter" WHERE "period" = ${period} FOR UPDATE`;
+
+    const nextNumber = counterRow.lastNumber + 1;
+    await tx.bastNumberCounter.update({
+      where: { period },
+      data: { lastNumber: nextNumber },
+    });
+
+    const bastNumber = `BAST/${year}/${month}/${String(nextNumber).padStart(4, "0")}`;
+
     const newBast = await tx.bast.create({
       data: {
         bastNumber,
