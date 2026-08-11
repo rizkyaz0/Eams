@@ -28,8 +28,8 @@ async function main() {
   });
 
   console.log("Upserting Users...");
-  // Password hash for 'password123' (generated: $2b$12$xbuCyEuAMbDbg.6R4DojBe2AsE9Z6zLl8iOx3/tTRiCfwZfxMImqC)
-  const hash = "$2b$12$xbuCyEuAMbDbg.6R4DojBe2AsE9Z6zLl8iOx3/tTRiCfwZfxMImqC";
+// Password hash for 'admin123' (generated: $2b$12$Uee.NCK755coWH2sSI63kut7DDcoELTX7TU7GHyHfLtlBIirT1Uba)
+const hash = "$2b$12$Uee.NCK755coWH2sSI63kut7DDcoELTX7TU7GHyHfLtlBIirT1Uba";
   await prisma.user.upsert({
     where: { id: "cm6xx12340001xyz5678usr01" },
     create: { id: "cm6xx12340001xyz5678usr01", email: "admin@eams.com", fullName: "Super Admin", password: hash, role: "SUPER_ADMIN", nip: "ADM001", divisionId: "cm6xx12340001xyz5678div01" },
