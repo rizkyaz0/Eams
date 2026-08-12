@@ -3,7 +3,7 @@
 import * as React from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Package, FileText, Users, Settings, Wrench, Building2, QrCode, Activity, BarChart3, DoorOpen, ClipboardCheck, PackageX, ArrowLeftRight, ShoppingCart } from "lucide-react";
+import { LayoutDashboard, Package, FileText, Users, Settings, Wrench, Building2, QrCode, Activity, BarChart3, ClipboardCheck, PackageX, ShoppingCart } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
@@ -66,13 +66,6 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
           roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET", "EMPLOYEE"],
         },
         {
-          title: "Peminjaman",
-          url: "/asset-loans",
-          icon: ArrowLeftRight,
-          isActive: pathname?.startsWith("/asset-loans") || false,
-          roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
-        },
-        {
           title: "Barang Rusak",
           url: "/damage-reports",
           icon: PackageX,
@@ -103,25 +96,6 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
           url: "/stock-opname",
           icon: ClipboardCheck,
           isActive: pathname?.startsWith("/stock-opname") || false,
-          roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
-        },
-      ],
-    },
-    {
-      label: "Ruangan",
-      items: [
-        {
-          title: "Penggunaan Ruangan",
-          url: "/room-usage",
-          icon: DoorOpen,
-          isActive: pathname?.startsWith("/room-usage") || false,
-          roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
-        },
-        {
-          title: "Laporan Kondisi",
-          url: "/room-reports",
-          icon: ClipboardCheck,
-          isActive: pathname?.startsWith("/room-reports") || false,
           roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
         },
       ],
