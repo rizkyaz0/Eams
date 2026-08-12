@@ -63,10 +63,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           data: { status: AssetStatus.IN_MAINTENANCE },
         });
       } else if (status === "COMPLETED" && currentMaintenance.assetId) {
-        await tx.asset.update({
-          where: { id: currentMaintenance.assetId },
-          data: { status: AssetStatus.AVAILABLE },
+        const otherActive = await tx.maintenance.count({
+          where: { assetId: currentMaintenance.assetId, id: { not: id }, status: { in: ["IN_PROGRESS", "PENDING"] } },
         });
+        if (otherActive === 0) {
+          await tx.asset.update({
+            where: { id: currentMaintenance.assetId },
+            data: { status: AssetStatus.AVAILABLE },
+          });
+        }
       }
 
       return updated;
@@ -94,10 +99,15 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     await prisma.$transaction(async (tx) => {
       // If deleting an ongoing maintenance, revert asset status
       if (currentMaintenance.status === "IN_PROGRESS" || currentMaintenance.status === "PENDING") {
-        await tx.asset.update({
-          where: { id: currentMaintenance.assetId },
-          data: { status: AssetStatus.AVAILABLE },
+        const otherActive = await tx.maintenance.count({
+          where: { assetId: currentMaintenance.assetId, id: { not: currentMaintenance.id }, status: { in: ["IN_PROGRESS", "PENDING"] } },
         });
+        if (otherActive === 0) {
+          await tx.asset.update({
+            where: { id: currentMaintenance.assetId },
+            data: { status: AssetStatus.AVAILABLE },
+          });
+        }
       }
 
       await tx.maintenance.delete({

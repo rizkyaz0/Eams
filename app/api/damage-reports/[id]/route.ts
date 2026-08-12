@@ -55,10 +55,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             where: { assetId: existing.assetId, status: "IN_PROGRESS" },
             data: { status: "COMPLETED", endDate: new Date() },
           });
-          await tx.asset.update({
-            where: { id: existing.assetId },
-            data: { status: AssetStatus.AVAILABLE, condition: existing.condition },
+          const remaining = await tx.maintenance.count({
+            where: { assetId: existing.assetId, status: { in: ["IN_PROGRESS", "PENDING"] } },
           });
+          if (remaining === 0) {
+            await tx.asset.update({
+              where: { id: existing.assetId },
+              data: { status: AssetStatus.AVAILABLE, condition: existing.condition },
+            });
+          }
         });
       }
     }
