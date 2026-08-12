@@ -27,6 +27,7 @@ const statusConfig = {
   AVAILABLE: { label: "Tersedia", variant: "default" as const, color: "bg-green-500" },
   IN_USE: { label: "Digunakan", variant: "secondary" as const, color: "bg-blue-500" },
   IN_MAINTENANCE: { label: "Pemeliharaan", variant: "outline" as const, color: "bg-orange-500" },
+  BORROWED: { label: "Dipinjam", variant: "secondary" as const, color: "bg-purple-500" },
   MISSING: { label: "Hilang", variant: "destructive" as const, color: "bg-red-500" },
   DISPOSED: { label: "Disposal", variant: "outline" as const, color: "bg-gray-500" },
 };

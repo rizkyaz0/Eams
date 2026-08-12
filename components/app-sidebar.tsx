@@ -3,7 +3,7 @@
 import * as React from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Package, FileText, Users, Settings, Wrench, Building2, QrCode, Activity, BarChart3, ClipboardCheck, PackageX, ShoppingCart } from "lucide-react";
+import { LayoutDashboard, Package, FileText, Users, Settings, Wrench, Building2, QrCode, Activity, BarChart3, ClipboardCheck, PackageX, ShoppingCart, ArrowLeftRight } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
@@ -64,6 +64,13 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
           icon: FileText,
           isActive: pathname?.startsWith("/bast") || false,
           roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET", "EMPLOYEE"],
+        },
+        {
+          title: "Peminjaman",
+          url: "/asset-loans",
+          icon: ArrowLeftRight,
+          isActive: pathname?.startsWith("/asset-loans") || false,
+          roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
         },
         {
           title: "Barang Rusak",
