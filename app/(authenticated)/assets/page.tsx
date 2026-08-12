@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AssetsTable } from "@/components/assets-table";
 import { CreateAssetDialog } from "@/components/create-asset-dialog";
-import { Plus, Search, QrCode, Download } from "lucide-react";
+import { Plus, Search, QrCode, Download, Upload } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { QrScannerDialog } from "@/components/qr-scanner-dialog";
+import { BulkImportDialog } from "@/components/bulk-import-dialog";
 
 export default function AssetsPage() {
   const [assets, setAssets] = useState<any[]>([]);
@@ -134,6 +135,7 @@ export default function AssetsPage() {
               <Download className="mr-2 size-4" />
               Ekspor
             </Button>
+            <BulkImportDialog onSuccess={() => fetchAssets()} />
             <Button variant="outline" onClick={() => setScannerOpen(true)}>
               <QrCode className="mr-2 size-4" />
               Scan Aset
