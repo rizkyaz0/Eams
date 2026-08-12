@@ -56,7 +56,7 @@ model User {
   resolvedDamageReports AssetDamageReport[] @relation("DamageResolver")
   procurementRequests  ProcurementRequest[]
   procurementApprovals ProcurementRequest[]  @relation("ProcurementApprover")
-  createdLoans         AssetLoan[]
+  createdLoanBatches   AssetLoanBatch[]
 }
 
 model Asset {
@@ -87,7 +87,7 @@ model Asset {
   maintenances  Maintenance[]
   stockOpnameItems StockOpnameItem[]
   damageReports AssetDamageReport[]
-  loans         AssetLoan[]
+  loanItems     AssetLoanItem[]
 
   @@index([tagNumber])
   @@index([status])
@@ -317,25 +317,46 @@ enum ProcurementStatus {
 
 // ===== Peminjaman Aset =====
 
-model AssetLoan {
-  id                 String     @id @default(cuid())
-  assetId            String
+model AssetLoanBatch {
+  id                 String          @id @default(cuid())
+  batchNumber        String          @unique
   borrowerName       String
   borrowerPosition   String?
   purpose            String?
   loanDate           DateTime
   expectedReturnDate DateTime?
-  actualReturnDate   DateTime?
-  status             LoanStatus @default(ACTIVE)
   notes              String?
+  status             LoanBatchStatus @default(ACTIVE)
   createdById        String
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt
-  asset              Asset      @relation(fields: [assetId], references: [id])
-  createdBy          User       @relation(fields: [createdById], references: [id])
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  createdBy          User            @relation(fields: [createdById], references: [id])
+  items              AssetLoanItem[]
 
+  @@index([status])
+}
+
+model AssetLoanItem {
+  id               String     @id @default(cuid())
+  batchId          String
+  assetId          String
+  actualReturnDate DateTime?
+  status           LoanStatus @default(ACTIVE)
+  notes            String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  batch            AssetLoanBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  asset            Asset          @relation(fields: [assetId], references: [id])
+
+  @@unique([batchId, assetId])
   @@index([assetId])
   @@index([status])
+}
+
+enum LoanBatchStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
 }
 
 enum LoanStatus {

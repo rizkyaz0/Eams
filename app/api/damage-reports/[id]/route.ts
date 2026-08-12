@@ -63,7 +63,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
               where: { assetId: existing.assetId, bast: { status: "APPROVED" } },
             });
             const activeLoan = !activeBast
-              ? await tx.assetLoan.findFirst({ where: { assetId: existing.assetId, status: "ACTIVE" } })
+              ? await tx.assetLoanItem.findFirst({ where: { assetId: existing.assetId, status: "ACTIVE" } })
               : null;
             await tx.asset.update({
               where: { id: existing.assetId },

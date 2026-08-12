@@ -4,7 +4,19 @@ import { requireUser, requireRole } from "@/lib/security";
 import { successResponse, errorResponse } from "@/lib/api-response";
 import { AssetStatus, UserRole } from "@prisma/client";
 
-/** GET /api/asset-loans - List all asset loans with optional filters */
+/** Generate batch number: LOAN/YYYY/MM/NNN */
+async function generateBatchNumber(): Promise<string> {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const prefix = `LOAN/${year}/${month}`;
+  const count = await prisma.assetLoanBatch.count({
+    where: { batchNumber: { startsWith: prefix } },
+  });
+  return `${prefix}/${String(count + 1).padStart(3, "0")}`;
+}
+
+/** GET /api/asset-loans - List all loan batches */
 export async function GET(request: NextRequest) {
   const { response } = await requireUser();
   if (response) return response;
@@ -12,65 +24,81 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") ?? undefined;
-    const assetId = searchParams.get("assetId") ?? undefined;
     const page = Math.max(1, parseInt(searchParams.get("page") ?? "1"));
-    const limit = Math.max(1, parseInt(searchParams.get("limit") ?? "20"));
+    const limit = Math.max(1, parseInt(searchParams.get("limit") ?? "10"));
     const skip = (page - 1) * limit;
 
-    const where = {
-      ...(status ? { status: status as "ACTIVE" | "RETURNED" | "OVERDUE" } : {}),
-      ...(assetId ? { assetId } : {}),
-    };
+    const where = status ? { status: status as "ACTIVE" | "COMPLETED" | "CANCELLED" } : {};
 
-    const [loans, total] = await Promise.all([
-      prisma.assetLoan.findMany({
+    const [batches, total] = await Promise.all([
+      prisma.assetLoanBatch.findMany({
         where,
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
         include: {
-          asset: { select: { id: true, name: true, tagNumber: true, category: { select: { name: true } } } },
           createdBy: { select: { fullName: true } },
+          items: {
+            include: {
+              asset: { select: { id: true, name: true, tagNumber: true, category: { select: { name: true } } } },
+            },
+          },
         },
       }),
-      prisma.assetLoan.count({ where }),
+      prisma.assetLoanBatch.count({ where }),
     ]);
 
     return successResponse({
-      data: loans,
+      data: batches,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
   } catch (error) {
-    console.error("Get asset loans error:", error);
+    console.error("Get asset loan batches error:", error);
     return errorResponse("Gagal mengambil data peminjaman");
   }
 }
 
-/** POST /api/asset-loans - Create a new asset loan */
+/** POST /api/asset-loans - Create a loan batch with multiple assets */
 export async function POST(request: NextRequest) {
   const { user, response } = await requireRole(UserRole.STAFF_ASSET);
   if (response) return response;
 
   try {
     const body = await request.json();
-    const { assetId, borrowerName, borrowerPosition, purpose, loanDate, expectedReturnDate, notes } = body;
+    const { assetIds, borrowerName, borrowerPosition, purpose, loanDate, expectedReturnDate, notes } = body;
 
-    if (!assetId || !borrowerName || !loanDate) {
-      return errorResponse("assetId, borrowerName, dan loanDate wajib diisi", 400);
+    if (!assetIds || !Array.isArray(assetIds) || assetIds.length === 0) {
+      return errorResponse("Pilih minimal satu aset", 400);
+    }
+    if (!borrowerName || !loanDate) {
+      return errorResponse("borrowerName dan loanDate wajib diisi", 400);
     }
 
-    const asset = await prisma.asset.findUnique({ where: { id: assetId } });
-    if (!asset) return errorResponse("Aset tidak ditemukan", 404);
+    const blockedStatuses: AssetStatus[] = [
+      AssetStatus.IN_MAINTENANCE,
+      AssetStatus.BORROWED,
+      AssetStatus.DISPOSED,
+      AssetStatus.MISSING,
+    ];
 
-    const blockedStatuses: AssetStatus[] = [AssetStatus.IN_MAINTENANCE, AssetStatus.BORROWED, AssetStatus.DISPOSED, AssetStatus.MISSING];
-    if (blockedStatuses.includes(asset.status)) {
-      return errorResponse(`Aset tidak dapat dipinjam karena statusnya: ${asset.status}`, 400);
+    const assets = await prisma.asset.findMany({ where: { id: { in: assetIds } } });
+    if (assets.length !== assetIds.length) {
+      return errorResponse("Satu atau lebih aset tidak ditemukan", 404);
+    }
+    const blocked = assets.filter((a) => blockedStatuses.includes(a.status));
+    if (blocked.length > 0) {
+      return errorResponse(
+        `Aset berikut tidak dapat dipinjam: ${blocked.map((a) => a.tagNumber).join(", ")}`,
+        400
+      );
     }
 
-    const loan = await prisma.$transaction(async (tx) => {
-      const created = await tx.assetLoan.create({
+    const batchNumber = await generateBatchNumber();
+
+    const batch = await prisma.$transaction(async (tx) => {
+      const created = await tx.assetLoanBatch.create({
         data: {
-          assetId,
+          batchNumber,
           borrowerName,
           borrowerPosition: borrowerPosition ?? null,
           purpose: purpose ?? null,
@@ -79,24 +107,27 @@ export async function POST(request: NextRequest) {
           notes: notes ?? null,
           status: "ACTIVE",
           createdById: user.userId,
+          items: {
+            create: assetIds.map((assetId: string) => ({ assetId, status: "ACTIVE" })),
+          },
         },
         include: {
-          asset: { select: { id: true, name: true, tagNumber: true } },
           createdBy: { select: { fullName: true } },
+          items: { include: { asset: { select: { id: true, name: true, tagNumber: true } } } },
         },
       });
 
-      await tx.asset.update({
-        where: { id: assetId },
+      await tx.asset.updateMany({
+        where: { id: { in: assetIds } },
         data: { status: AssetStatus.BORROWED },
       });
 
       return created;
     });
 
-    return successResponse(loan, "Peminjaman berhasil dibuat");
+    return successResponse(batch, "Peminjaman berhasil dibuat");
   } catch (error) {
-    console.error("Create asset loan error:", error);
+    console.error("Create asset loan batch error:", error);
     return errorResponse("Gagal membuat peminjaman");
   }
 }

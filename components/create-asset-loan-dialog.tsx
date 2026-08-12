@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
 
 interface CreateAssetLoanDialogProps {
@@ -20,9 +21,10 @@ export function CreateAssetLoanDialog({ open, onOpenChange, onSuccess }: CreateA
   const [loading, setLoading] = useState(false);
   const [assets, setAssets] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
+  const [search, setSearch] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
 
-  const [assetId, setAssetId] = useState("");
   const [borrowerName, setBorrowerName] = useState("");
   const [borrowerPosition, setBorrowerPosition] = useState("");
   const [purpose, setPurpose] = useState("");
@@ -38,16 +40,16 @@ export function CreateAssetLoanDialog({ open, onOpenChange, onSuccess }: CreateA
     if (open) {
       fetchAssets();
       setLoanDate(new Date().toISOString().split("T")[0]);
+      setSelectedIds([]);
     }
   }, [open]);
 
   const fetchAssets = async () => {
     setSearching(true);
     try {
-      const res = await fetch("/api/assets?limit=200&status=AVAILABLE");
+      const res = await fetch("/api/assets?limit=500");
       const data = await res.json();
       if (data.success) {
-        // Include AVAILABLE and IN_USE assets (borrowable)
         const borrowable = (data.data.assets as any[]).filter((a) =>
           ["AVAILABLE", "IN_USE"].includes(a.status)
         );
@@ -60,18 +62,36 @@ export function CreateAssetLoanDialog({ open, onOpenChange, onSuccess }: CreateA
     }
   };
 
+  const toggleAsset = (assetId: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(assetId) ? prev.filter((id) => id !== assetId) : [...prev, assetId]
+    );
+  };
+
+  const filteredAssets = assets.filter(
+    (a) =>
+      a.name.toLowerCase().includes(search.toLowerCase()) ||
+      a.tagNumber.toLowerCase().includes(search.toLowerCase()) ||
+      a.category?.name?.toLowerCase().includes(search.toLowerCase())
+  );
+
   const resetForm = () => {
-    setAssetId("");
+    setSelectedIds([]);
     setBorrowerName("");
     setBorrowerPosition("");
     setPurpose("");
     setLoanDate("");
     setExpectedReturnDate("");
     setNotes("");
+    setSearch("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (selectedIds.length === 0) {
+      toast.error("Pilih minimal satu aset");
+      return;
+    }
     setLoading(true);
 
     try {
@@ -79,7 +99,7 @@ export function CreateAssetLoanDialog({ open, onOpenChange, onSuccess }: CreateA
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          assetId,
+          assetIds: selectedIds,
           borrowerName,
           borrowerPosition: borrowerPosition || null,
           purpose: purpose || null,
@@ -92,7 +112,7 @@ export function CreateAssetLoanDialog({ open, onOpenChange, onSuccess }: CreateA
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal membuat peminjaman");
 
-      toast.success("Peminjaman berhasil dibuat");
+      toast.success(`Peminjaman ${selectedIds.length} aset berhasil dibuat`);
       resetForm();
       onSuccess();
     } catch (error: any) {
@@ -104,7 +124,7 @@ export function CreateAssetLoanDialog({ open, onOpenChange, onSuccess }: CreateA
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent className="sm:max-w-[620px] max-h-[90vh] overflow-y-auto">
         {!mounted ? (
           <div className="flex h-[300px] items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -113,24 +133,58 @@ export function CreateAssetLoanDialog({ open, onOpenChange, onSuccess }: CreateA
           <form onSubmit={handleSubmit}>
             <DialogHeader>
               <DialogTitle>Tambah Peminjaman Aset</DialogTitle>
-              <DialogDescription>Catat peminjaman aset sementara kepada pihak tertentu.</DialogDescription>
+              <DialogDescription>Pilih satu atau beberapa aset untuk dipinjam sekaligus.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
+              {/* Asset multi-select */}
               <div className="grid gap-2">
-                <Label htmlFor="asset">Aset</Label>
-                <Select value={assetId} onValueChange={setAssetId} required>
-                  <SelectTrigger id="asset">
-                    <SelectValue placeholder={searching ? "Memuat aset..." : "Pilih aset"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {assets.map((asset) => (
-                      <SelectItem key={asset.id} value={asset.id}>
-                        {asset.tagNumber} — {asset.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>
+                  Pilih Aset{" "}
+                  <span className="text-muted-foreground font-normal">
+                    ({selectedIds.length} dipilih)
+                  </span>
+                </Label>
+                <div className="border rounded-md">
+                  <div className="flex items-center gap-2 p-2 border-b">
+                    <Search className="size-4 text-muted-foreground shrink-0" />
+                    <Input
+                      placeholder="Cari aset..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="border-0 shadow-none focus-visible:ring-0 h-7 p-0"
+                    />
+                  </div>
+                  <ScrollArea className="h-48">
+                    {searching ? (
+                      <div className="flex items-center justify-center h-24">
+                        <Loader2 className="size-5 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : filteredAssets.length === 0 ? (
+                      <p className="text-center text-sm text-muted-foreground py-6">Tidak ada aset tersedia</p>
+                    ) : (
+                      <div className="p-2 space-y-1">
+                        {filteredAssets.map((asset) => (
+                          <div
+                            key={asset.id}
+                            className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer"
+                            onClick={() => toggleAsset(asset.id)}
+                          >
+                            <Checkbox
+                              checked={selectedIds.includes(asset.id)}
+                              onCheckedChange={() => toggleAsset(asset.id)}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{asset.name}</p>
+                              <p className="text-xs text-muted-foreground">{asset.tagNumber} · {asset.category?.name}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </ScrollArea>
+                </div>
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="borrowerName">Nama Peminjam</Label>
@@ -152,6 +206,7 @@ export function CreateAssetLoanDialog({ open, onOpenChange, onSuccess }: CreateA
                   />
                 </div>
               </div>
+
               <div className="grid gap-2">
                 <Label htmlFor="purpose">Keperluan</Label>
                 <Textarea
@@ -162,6 +217,7 @@ export function CreateAssetLoanDialog({ open, onOpenChange, onSuccess }: CreateA
                   rows={2}
                 />
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="loanDate">Tanggal Pinjam</Label>
@@ -183,6 +239,7 @@ export function CreateAssetLoanDialog({ open, onOpenChange, onSuccess }: CreateA
                   />
                 </div>
               </div>
+
               <div className="grid gap-2">
                 <Label htmlFor="notes">Catatan</Label>
                 <Textarea
@@ -198,9 +255,9 @@ export function CreateAssetLoanDialog({ open, onOpenChange, onSuccess }: CreateA
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
                 Batal
               </Button>
-              <Button type="submit" disabled={loading || !assetId || !borrowerName || !loanDate}>
+              <Button type="submit" disabled={loading || selectedIds.length === 0 || !borrowerName || !loanDate}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Simpan
+                Simpan {selectedIds.length > 0 && `(${selectedIds.length} aset)`}
               </Button>
             </DialogFooter>
           </form>

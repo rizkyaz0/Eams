@@ -71,7 +71,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             where: { assetId: currentMaintenance.assetId, bast: { status: "APPROVED" } },
           });
           const activeLoan = !activeBast
-            ? await tx.assetLoan.findFirst({ where: { assetId: currentMaintenance.assetId, status: "ACTIVE" } })
+            ? await tx.assetLoanItem.findFirst({ where: { assetId: currentMaintenance.assetId, status: "ACTIVE" } })
             : null;
           await tx.asset.update({
             where: { id: currentMaintenance.assetId },
@@ -113,7 +113,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
             where: { assetId: currentMaintenance.assetId, bast: { status: "APPROVED" } },
           });
           const activeLoan = !activeBast
-            ? await tx.assetLoan.findFirst({ where: { assetId: currentMaintenance.assetId, status: "ACTIVE" } })
+            ? await tx.assetLoanItem.findFirst({ where: { assetId: currentMaintenance.assetId, status: "ACTIVE" } })
             : null;
           await tx.asset.update({
             where: { id: currentMaintenance.assetId },

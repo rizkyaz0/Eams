@@ -9,7 +9,7 @@ import { CreateAssetLoanDialog } from "@/components/create-asset-loan-dialog";
 import { toast } from "sonner";
 
 export default function AssetLoansPage() {
-  const [loans, setLoans] = useState<any[]>([]);
+  const [batches, setBatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -17,7 +17,7 @@ export default function AssetLoansPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
-  const fetchLoans = async () => {
+  const fetchBatches = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -29,11 +29,11 @@ export default function AssetLoansPage() {
       const res = await fetch(`/api/asset-loans?${params}`);
       const data = await res.json();
       if (data.success) {
-        setLoans(data.data.data);
+        setBatches(data.data.data);
         setTotal(data.data.pagination.total);
       }
     } catch (error) {
-      console.error("Failed to fetch loans:", error);
+      console.error("Failed to fetch loan batches:", error);
     } finally {
       setLoading(false);
     }
@@ -41,43 +41,22 @@ export default function AssetLoansPage() {
 
   useEffect(() => {
     setIsMounted(true);
-    fetchLoans();
+    fetchBatches();
   }, [page, statusFilter]);
 
-  const handleReturn = async (loan: any) => {
-    if (!confirm(`Kembalikan aset "${loan.asset?.name}" dari ${loan.borrowerName}?`)) return;
+  const handleDelete = async (batch: any) => {
+    if (!confirm(`Hapus data peminjaman ${batch.batchNumber}?`)) return;
 
     try {
-      const res = await fetch(`/api/asset-loans/${loan.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "RETURNED" }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success("Aset berhasil dikembalikan");
-        fetchLoans();
-      } else {
-        toast.error(data.error || "Gagal mengembalikan aset");
-      }
-    } catch (error) {
-      toast.error("Terjadi kesalahan");
-    }
-  };
-
-  const handleDelete = async (loan: any) => {
-    if (!confirm(`Hapus data peminjaman aset "${loan.asset?.name}"?`)) return;
-
-    try {
-      const res = await fetch(`/api/asset-loans/${loan.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/asset-loans/${batch.id}`, { method: "DELETE" });
       const data = await res.json();
       if (data.success) {
         toast.success("Data peminjaman berhasil dihapus");
-        fetchLoans();
+        fetchBatches();
       } else {
         toast.error(data.error || "Gagal menghapus data peminjaman");
       }
-    } catch (error) {
+    } catch {
       toast.error("Terjadi kesalahan");
     }
   };
@@ -112,20 +91,20 @@ export default function AssetLoansPage() {
             <SelectContent>
               <SelectItem value="all">Semua Status</SelectItem>
               <SelectItem value="ACTIVE">Aktif</SelectItem>
-              <SelectItem value="RETURNED">Dikembalikan</SelectItem>
-              <SelectItem value="OVERDUE">Terlambat</SelectItem>
+              <SelectItem value="COMPLETED">Selesai</SelectItem>
+              <SelectItem value="CANCELLED">Dibatalkan</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <AssetLoansTable
-          loans={loans}
+          batches={batches}
           loading={loading}
           page={page}
           total={total}
           onPageChange={setPage}
-          onReturn={handleReturn}
           onDelete={handleDelete}
+          onRefresh={fetchBatches}
         />
       </div>
 
@@ -134,7 +113,7 @@ export default function AssetLoansPage() {
         onOpenChange={setCreateDialogOpen}
         onSuccess={() => {
           setCreateDialogOpen(false);
-          fetchLoans();
+          fetchBatches();
         }}
       />
     </>
