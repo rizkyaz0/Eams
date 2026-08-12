@@ -24,17 +24,20 @@ interface AssetsTableProps {
 }
 
 const statusConfig = {
-  AVAILABLE: { label: "Available", variant: "default" as const, color: "bg-green-500" },
-  IN_USE: { label: "In Use", variant: "secondary" as const, color: "bg-blue-500" },
-  IN_MAINTENANCE: { label: "Maintenance", variant: "outline" as const, color: "bg-orange-500" },
-  MISSING: { label: "Missing", variant: "destructive" as const, color: "bg-red-500" },
-  DISPOSED: { label: "Disposed", variant: "outline" as const, color: "bg-gray-500" },
+  AVAILABLE: { label: "Tersedia", variant: "default" as const, color: "bg-green-500" },
+  IN_USE: { label: "Digunakan", variant: "secondary" as const, color: "bg-blue-500" },
+  IN_MAINTENANCE: { label: "Pemeliharaan", variant: "outline" as const, color: "bg-orange-500" },
+  MISSING: { label: "Hilang", variant: "destructive" as const, color: "bg-red-500" },
+  DISPOSED: { label: "Disposal", variant: "outline" as const, color: "bg-gray-500" },
 };
 
 const conditionConfig = {
-  GOOD: "Good",
-  MINOR_DAMAGE: "Minor Damage",
-  MAJOR_DAMAGE: "Major Damage",
+  GOOD: "Baik",
+  FAIR: "Cukup",
+  POOR: "Buruk",
+  DAMAGED: "Rusak",
+  MINOR_DAMAGE: "Rusak Ringan",
+  MAJOR_DAMAGE: "Rusak Berat",
   TOTAL_LOSS: "Total Loss",
 };
 
@@ -62,8 +65,8 @@ export function AssetsTable({ assets, loading, page, total, onPageChange, onRefr
     return (
       <Card className="p-12">
         <div className="text-center">
-          <p className="text-lg font-semibold">No assets found</p>
-          <p className="text-sm text-muted-foreground mt-1">Try adjusting your filters or create a new asset</p>
+          <p className="text-lg font-semibold">Tidak ada aset ditemukan</p>
+          <p className="text-sm text-muted-foreground mt-1">Coba ubah filter atau tambah aset baru</p>
         </div>
       </Card>
     );
@@ -77,14 +80,14 @@ export function AssetsTable({ assets, loading, page, total, onPageChange, onRefr
             <TableHeader>
               <TableRow>
                 <TableHead>Tag Number</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
+                <TableHead>Nama</TableHead>
+                <TableHead>Kategori</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Condition</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Purchase Date</TableHead>
-                <TableHead>Warranty</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>Kondisi</TableHead>
+                <TableHead>Lokasi</TableHead>
+                <TableHead>Tgl. Beli</TableHead>
+                <TableHead>Garansi</TableHead>
+                <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -121,11 +124,11 @@ export function AssetsTable({ assets, loading, page, total, onPageChange, onRefr
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuLabel>Aksi</DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => router.push(`/assets/${asset.id}`)}>
                             <Eye className="mr-2 h-4 w-4" />
-                            View Details
+                            Lihat Detail
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setEditAsset(asset)}>
                             <Edit className="mr-2 h-4 w-4" />
@@ -134,7 +137,7 @@ export function AssetsTable({ assets, loading, page, total, onPageChange, onRefr
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-destructive" onClick={() => setDeleteAsset(asset)}>
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
+                            Hapus
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -149,14 +152,14 @@ export function AssetsTable({ assets, loading, page, total, onPageChange, onRefr
         {/* Pagination */}
         <div className="flex items-center justify-between px-6 py-4 border-t">
           <p className="text-sm text-muted-foreground">
-            Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} assets
+            Menampilkan {(page - 1) * limit + 1}–{Math.min(page * limit, total)} dari {total} aset
           </p>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => onPageChange(page - 1)} disabled={page === 1}>
-              Previous
+              Sebelumnya
             </Button>
             <Button variant="outline" size="sm" onClick={() => onPageChange(page + 1)} disabled={page >= totalPages}>
-              Next
+              Berikutnya
             </Button>
           </div>
         </div>

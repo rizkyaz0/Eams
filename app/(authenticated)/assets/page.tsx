@@ -124,13 +124,13 @@ export default function AssetsPage() {
 
   return (
     <>
-      <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
-        <div className="flex items-center justify-between">
+      <div className="flex flex-1 flex-col gap-4 overflow-x-hidden p-4 md:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Aset</h1>
             <p className="text-muted-foreground">Kelola aset organisasi Anda</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={handleExport}>
               <Download className="mr-2 size-4" />
               Ekspor
