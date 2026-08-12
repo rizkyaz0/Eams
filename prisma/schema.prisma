@@ -54,8 +54,6 @@ model User {
   stockOpnames         StockOpname[]
   damageReports        AssetDamageReport[]
   resolvedDamageReports AssetDamageReport[] @relation("DamageResolver")
-  procurementRequests  ProcurementRequest[]
-  procurementApprovals ProcurementRequest[]  @relation("ProcurementApprover")
   createdLoanBatches   AssetLoanBatch[]
 }
 
@@ -151,7 +149,6 @@ model Maintenance {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   asset       Asset     @relation(fields: [assetId], references: [id])
-  procurementRequests ProcurementRequest[]
 }
 
 model AuditLog {
@@ -281,38 +278,6 @@ model AssetDamageReport {
 
   @@index([assetId])
   @@index([status])
-}
-
-// ===== Pengadaan untuk Service =====
-
-model ProcurementRequest {
-  id            String             @id @default(cuid())
-  maintenanceId String?
-  itemName      String
-  quantity      Int                @default(1)
-  unit          String?
-  estimatedPrice Decimal?          @db.Decimal(15, 2)
-  supplier      String?
-  status        ProcurementStatus  @default(PENDING)
-  notes         String?
-  requestedById String
-  approvedById  String?
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
-  maintenance   Maintenance?       @relation(fields: [maintenanceId], references: [id])
-  requestedBy   User               @relation(fields: [requestedById], references: [id])
-  approvedBy    User?              @relation("ProcurementApprover", fields: [approvedById], references: [id])
-
-  @@index([status])
-  @@index([maintenanceId])
-}
-
-enum ProcurementStatus {
-  PENDING
-  APPROVED
-  ORDERED
-  RECEIVED
-  CANCELLED
 }
 
 // ===== Peminjaman Aset =====

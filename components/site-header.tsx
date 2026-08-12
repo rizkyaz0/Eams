@@ -20,7 +20,6 @@ const pageTitles: Record<string, string> = {
   "/asset-loans": "Peminjaman",
   "/damage-reports": "Barang Rusak",
   "/stock-opname": "Stock Opname",
-  "/procurement": "Pengadaan",
   "/room-usage": "Penggunaan Ruangan",
   "/room-reports": "Laporan Kondisi Ruangan",
 };

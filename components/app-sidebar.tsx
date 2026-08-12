@@ -3,7 +3,7 @@
 import * as React from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Package, FileText, Users, Settings, Wrench, Building2, QrCode, Activity, BarChart3, ClipboardCheck, PackageX, ShoppingCart, ArrowLeftRight } from "lucide-react";
+import { LayoutDashboard, Package, FileText, Users, Settings, Wrench, Building2, QrCode, Activity, BarChart3, ClipboardCheck, PackageX, ArrowLeftRight } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
@@ -90,13 +90,6 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
           icon: Wrench,
           isActive: pathname?.startsWith("/maintenance") || false,
           roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET", "TEKNISI"],
-        },
-        {
-          title: "Pengadaan",
-          url: "/procurement",
-          icon: ShoppingCart,
-          isActive: pathname?.startsWith("/procurement") || false,
-          roles: ["SUPER_ADMIN", "ADMIN_INSTANSI", "STAFF_ASSET"],
         },
         {
           title: "Stock Opname",
