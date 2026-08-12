@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Search, Trash2, CheckCircle } from "lucide-react";
+import { MoreHorizontal, Search, Trash2, CheckCircle, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -42,7 +42,7 @@ export function StockOpnameTable({ data }: { data: StockOpname[] }) {
       <div className="rounded-md border"><Table><TableHeader><TableRow><TableHead>Judul</TableHead><TableHead>Frekuensi</TableHead><TableHead>Mulai</TableHead><TableHead>Selesai</TableHead><TableHead className="text-center">Item</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Aksi</TableHead></TableRow></TableHeader>
         <TableBody>{filtered.length === 0 ? <TableRow><TableCell colSpan={7} className="h-24 text-center">Tidak ada data.</TableCell></TableRow> : filtered.map((s) => (
           <TableRow key={s.id}><TableCell className="font-medium">{s.title}</TableCell><TableCell><Badge variant="outline">{freqLabels[s.frequency] || s.frequency}</Badge></TableCell><TableCell>{new Date(s.startDate).toLocaleDateString("id-ID")}</TableCell><TableCell>{s.endDate ? new Date(s.endDate).toLocaleDateString("id-ID") : "-"}</TableCell><TableCell className="text-center">{s._count.items}</TableCell><TableCell><Badge variant={statusVariants[s.status] || "outline"}>{statusLabels[s.status] || s.status}</Badge></TableCell>
-            <TableCell className="text-right"><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuLabel>Aksi</DropdownMenuLabel>{s.status === "IN_PROGRESS" && <DropdownMenuItem onClick={() => handleComplete(s.id)}><CheckCircle className="mr-2 h-4 w-4" /> Selesaikan</DropdownMenuItem>}<DropdownMenuSeparator /><DropdownMenuItem onClick={() => handleDelete(s.id)} className="text-red-600 focus:text-red-600"><Trash2 className="mr-2 h-4 w-4" /> Hapus</DropdownMenuItem></DropdownMenuContent></DropdownMenu></TableCell></TableRow>
+            <TableCell className="text-right"><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuLabel>Aksi</DropdownMenuLabel><DropdownMenuItem onClick={() => router.push(`/stock-opname/${s.id}`)}><Eye className="mr-2 h-4 w-4" /> Lihat Detail</DropdownMenuItem>{s.status === "IN_PROGRESS" && <DropdownMenuItem onClick={() => handleComplete(s.id)}><CheckCircle className="mr-2 h-4 w-4" /> Selesaikan</DropdownMenuItem>}<DropdownMenuSeparator /><DropdownMenuItem onClick={() => handleDelete(s.id)} className="text-red-600 focus:text-red-600"><Trash2 className="mr-2 h-4 w-4" /> Hapus</DropdownMenuItem></DropdownMenuContent></DropdownMenu></TableCell></TableRow>
         ))}</TableBody></Table></div>
     </div>
   );
