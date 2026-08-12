@@ -59,9 +59,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             where: { assetId: existing.assetId, status: { in: ["IN_PROGRESS", "PENDING"] } },
           });
           if (remaining === 0) {
+            const activeBast = await tx.bastDetail.findFirst({
+              where: { assetId: existing.assetId, bast: { status: "APPROVED" } },
+            });
             await tx.asset.update({
               where: { id: existing.assetId },
-              data: { status: AssetStatus.AVAILABLE, condition: existing.condition },
+              data: { status: activeBast ? AssetStatus.IN_USE : AssetStatus.AVAILABLE, condition: existing.condition },
             });
           }
         });

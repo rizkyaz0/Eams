@@ -67,9 +67,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           where: { assetId: currentMaintenance.assetId, id: { not: id }, status: { in: ["IN_PROGRESS", "PENDING"] } },
         });
         if (otherActive === 0) {
+          const activeBast = await tx.bastDetail.findFirst({
+            where: { assetId: currentMaintenance.assetId, bast: { status: "APPROVED" } },
+          });
           await tx.asset.update({
             where: { id: currentMaintenance.assetId },
-            data: { status: AssetStatus.AVAILABLE },
+            data: { status: activeBast ? AssetStatus.IN_USE : AssetStatus.AVAILABLE },
           });
         }
       }
@@ -103,9 +106,12 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
           where: { assetId: currentMaintenance.assetId, id: { not: currentMaintenance.id }, status: { in: ["IN_PROGRESS", "PENDING"] } },
         });
         if (otherActive === 0) {
+          const activeBast = await tx.bastDetail.findFirst({
+            where: { assetId: currentMaintenance.assetId, bast: { status: "APPROVED" } },
+          });
           await tx.asset.update({
             where: { id: currentMaintenance.assetId },
-            data: { status: AssetStatus.AVAILABLE },
+            data: { status: activeBast ? AssetStatus.IN_USE : AssetStatus.AVAILABLE },
           });
         }
       }
