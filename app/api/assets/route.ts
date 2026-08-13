@@ -28,6 +28,11 @@ export async function GET(request: NextRequest) {
     // Build where clause
     const where: any = {};
 
+    // MR can only see assets from their own division
+    if (user.role === UserRole.MR) {
+      where.divisionId = user.divisionId ?? "NO_DIVISION_ASSIGNED";
+    }
+
     if (status) {
       where.status = status;
     }

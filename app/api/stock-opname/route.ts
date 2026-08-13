@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 import { requireRole, requireUser } from "@/lib/security";
 import prisma from "@/lib/db";
 import { successResponse, errorResponse } from "@/lib/api-response";
-import { UserRole } from "@prisma/client";
+import { UserRole, StockOpnameStatus } from "@prisma/client";
 
 /** GET /api/stock-opname - List stock opname sessions */
 export async function GET(request: NextRequest) {
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
     const sessions = await prisma.stockOpname.findMany({
-      where: status ? { status: status as any } : undefined,
+      where: status && (Object.values(StockOpnameStatus) as string[]).includes(status) ? { status: status as StockOpnameStatus } : undefined,
       include: { createdBy: { select: { id: true, fullName: true } }, _count: { select: { items: true } } },
       orderBy: { createdAt: "desc" },
     });

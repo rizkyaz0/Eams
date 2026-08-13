@@ -1,19 +1,26 @@
 // app/api/damage-reports/route.ts
 import { NextRequest } from "next/server";
-import { requireRole, requireUser } from "@/lib/security";
+import { requireUser } from "@/lib/security";
 import prisma from "@/lib/db";
 import { successResponse, errorResponse } from "@/lib/api-response";
 import { UserRole, ReportStatus } from "@prisma/client";
 
 /** GET /api/damage-reports */
 export async function GET(request: NextRequest) {
-  const { response } = await requireUser();
+  const { user, response } = await requireUser();
   if (response) return response;
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
+
+    const where: any = status ? { status: status as ReportStatus } : {};
+    // MR sees only damage reports for their division's assets
+    if (user.role === UserRole.MR) {
+      where.asset = { divisionId: user.divisionId ?? "NO_DIVISION_ASSIGNED" };
+    }
+
     const reports = await prisma.assetDamageReport.findMany({
-      where: status ? { status: status as ReportStatus } : undefined,
+      where,
       include: {
         asset: { select: { id: true, name: true, tagNumber: true } },
         reportedBy: { select: { id: true, fullName: true } },
@@ -30,7 +37,7 @@ export async function GET(request: NextRequest) {
 
 /** POST /api/damage-reports */
 export async function POST(request: NextRequest) {
-  const { user, response } = await requireRole(UserRole.STAFF_ASSET);
+  const { user, response } = await requireUser();
   if (response) return response;
   try {
     const body = await request.json();

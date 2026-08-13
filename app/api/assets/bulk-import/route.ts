@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/security";
 import prisma from "@/lib/db";
 import { successResponse, errorResponse } from "@/lib/api-response";
-import { AssetCondition, AssetStatus, Prisma } from "@prisma/client";
+import { AssetCondition, AssetStatus, Prisma, UserRole } from "@prisma/client";
 
 /**
  * POST /api/assets/bulk-import - Bulk import assets from CSV-parsed JSON array.
@@ -11,7 +11,7 @@ import { AssetCondition, AssetStatus, Prisma } from "@prisma/client";
  * Validates each row, resolves category by name (fallback to id), checks tagNumber uniqueness, inserts in a transaction.
  */
 export async function POST(request: NextRequest) {
-  const { user, response } = await requireRole("STAFF_ASSET" as any);
+  const { user, response } = await requireRole(UserRole.STAFF_ASSET);
   if (response) return response;
 
   try {
@@ -240,7 +240,7 @@ export async function POST(request: NextRequest) {
  * GET /api/assets/bulk-import - Download CSV template
  */
 export async function GET(request: NextRequest) {
-  const { response } = await requireRole("STAFF_ASSET" as any);
+  const { response } = await requireRole(UserRole.STAFF_ASSET);
   if (response) return response;
 
   const header = "name,tagNumber,serialNumber,specification,category,location,division,purchaseDate,purchasePrice,vendorName,warrantyExpiry,condition,description";

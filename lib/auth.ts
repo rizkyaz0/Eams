@@ -25,6 +25,7 @@ export interface JWTPayload {
   role: UserRole;
   fullName: string;
   tokenVersion: number;
+  divisionId: string | null;
 }
 
 /**
@@ -63,7 +64,9 @@ export function parseClaims(value: unknown): JWTPayload | null {
     return null;
   }
 
-  return value as JWTPayload;
+  // divisionId may be absent in tokens issued before this field was added — normalize to null
+  const divisionId = typeof claims.divisionId === "string" ? claims.divisionId : null;
+  return { ...claims, userId, email, fullName, role: role as UserRole, tokenVersion, divisionId } as JWTPayload;
 }
 
 /**
@@ -204,9 +207,10 @@ export function hasRole(userRole: UserRole, requiredRoles: UserRole[]): boolean 
  * Role hierarchy untuk authorization
  */
 export const ROLE_HIERARCHY: Record<UserRole, number> = {
-  SUPER_ADMIN: 5,
-  ADMIN_INSTANSI: 4,
-  STAFF_ASSET: 3,
+  SUPER_ADMIN: 6,
+  ADMIN_INSTANSI: 5,
+  STAFF_ASSET: 4,
+  MR: 3,
   TEKNISI: 2,
   EMPLOYEE: 1,
 };

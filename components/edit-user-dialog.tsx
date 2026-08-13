@@ -49,7 +49,7 @@ export function EditUserDialog({ open, onOpenChange, onSuccess, user }: EditUser
       const response = await fetch("/api/divisions");
       const data = await response.json();
       if (data.success) {
-        setDivisions(data.data.divisions || []);
+        setDivisions(Array.isArray(data.data) ? data.data : []);
       }
     } catch (error) {
       console.error("Failed to fetch divisions:", error);
@@ -139,6 +139,7 @@ export function EditUserDialog({ open, onOpenChange, onSuccess, user }: EditUser
                     <SelectItem value="SUPER_ADMIN">Super Admin</SelectItem>
                     <SelectItem value="ADMIN_INSTANSI">Admin Instansi</SelectItem>
                     <SelectItem value="STAFF_ASSET">Staff Asset</SelectItem>
+                    <SelectItem value="MR">MR (Management Representative)</SelectItem>
                     <SelectItem value="TEKNISI">Teknisi</SelectItem>
                     <SelectItem value="EMPLOYEE">Employee</SelectItem>
                   </SelectContent>

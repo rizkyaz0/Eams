@@ -1,7 +1,7 @@
 // app/api/users/[id]/route.ts
 import { NextRequest } from "next/server";
 import db from "@/lib/db";
-import { getCurrentUser, hashPassword, hasMinimumRole, bumpTokenVersion } from "@/lib/auth";
+import { getCurrentUser, hashPassword, verifyPassword, hasMinimumRole, bumpTokenVersion } from "@/lib/auth";
 import { successResponse, errorResponse, unauthorizedResponse, forbiddenResponse, notFoundResponse } from "@/lib/api-response";
 import { requireRole } from "@/lib/security";
 import { Prisma, UserRole } from "@prisma/client";
@@ -99,6 +99,18 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     // If password is being changed
     let passwordChanged = false;
     if (body.password) {
+      // Non-admins must provide current password when changing their own password
+      const isSelf = user.userId === id;
+      const isAdmin = hasMinimumRole(user.role, UserRole.ADMIN_INSTANSI);
+      if (isSelf && !isAdmin) {
+        if (!body.currentPassword) {
+          return errorResponse("Password saat ini diperlukan", 400);
+        }
+        const valid = await verifyPassword(body.currentPassword, existingUser.password);
+        if (!valid) {
+          return errorResponse("Password saat ini tidak valid", 400);
+        }
+      }
       updateData.password = await hashPassword(body.password);
       passwordChanged = true;
     }

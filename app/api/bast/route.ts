@@ -29,6 +29,12 @@ export async function GET(request: NextRequest) {
     // Build where clause
     const where: any = {};
 
+    // MR can only see BAST involving their division's assets
+    if (user.role === UserRole.MR) {
+      const divisionId = user.divisionId ?? "NO_DIVISION_ASSIGNED";
+      where.details = { some: { asset: { divisionId } } };
+    }
+
     if (type) {
       where.type = type;
     }

@@ -18,7 +18,7 @@ async function generateBatchNumber(): Promise<string> {
 
 /** GET /api/asset-loans - List all loan batches */
 export async function GET(request: NextRequest) {
-  const { response } = await requireUser();
+  const { user, response } = await requireUser();
   if (response) return response;
 
   try {
@@ -28,7 +28,13 @@ export async function GET(request: NextRequest) {
     const limit = Math.max(1, parseInt(searchParams.get("limit") ?? "10"));
     const skip = (page - 1) * limit;
 
-    const where = status ? { status: status as "ACTIVE" | "COMPLETED" | "CANCELLED" } : {};
+    const where: any = status ? { status: status as "ACTIVE" | "COMPLETED" | "CANCELLED" } : {};
+
+    // MR can only see batches containing assets from their division
+    if (user.role === UserRole.MR) {
+      const divisionId = user.divisionId ?? "NO_DIVISION_ASSIGNED";
+      where.items = { some: { asset: { divisionId } } };
+    }
 
     const [batches, total] = await Promise.all([
       prisma.assetLoanBatch.findMany({
@@ -60,7 +66,7 @@ export async function GET(request: NextRequest) {
 
 /** POST /api/asset-loans - Create a loan batch with multiple assets */
 export async function POST(request: NextRequest) {
-  const { user, response } = await requireRole(UserRole.STAFF_ASSET);
+  const { user, response } = await requireRole(UserRole.MR);
   if (response) return response;
 
   try {

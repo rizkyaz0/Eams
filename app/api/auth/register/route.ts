@@ -60,6 +60,7 @@ export async function POST(request: NextRequest) {
       role: user.role,
       fullName: user.fullName,
       tokenVersion: user.tokenVersion,
+      divisionId: user.divisionId ?? null,
     });
 
     // Set cookie
