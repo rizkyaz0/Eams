@@ -74,7 +74,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
 
               <div className="grid gap-2">
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={isLoading} autoComplete="current-password" />
+                <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={isLoading} autoComplete="current-password" />
               </div>
 
               <Button type="submit" className="w-full" disabled={isLoading}>
@@ -82,10 +82,6 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
                 {isLoading ? "Logging in..." : "Login"}
               </Button>
 
-              <div className="mt-4 text-center text-sm text-muted-foreground">
-                <p>Demo Account:</p>
-                <p className="font-mono text-xs mt-1">admin@kantor.com / admin123</p>
-              </div>
             </div>
           </form>
         </CardContent>

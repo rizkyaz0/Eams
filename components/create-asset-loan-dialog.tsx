@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -169,10 +168,11 @@ export function CreateAssetLoanDialog({ open, onOpenChange, onSuccess }: CreateA
                             className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer"
                             onClick={() => toggleAsset(asset.id)}
                           >
-                            <Checkbox
-                              checked={selectedIds.includes(asset.id)}
-                              onCheckedChange={() => toggleAsset(asset.id)}
-                            />
+                            <div className={`h-4 w-4 shrink-0 rounded-sm border flex items-center justify-center ${selectedIds.includes(asset.id) ? "bg-primary border-primary" : "border-input"}`}>
+                              {selectedIds.includes(asset.id) && (
+                                <svg className="h-3 w-3 text-primary-foreground" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                              )}
+                            </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium truncate">{asset.name}</p>
                               <p className="text-xs text-muted-foreground">{asset.tagNumber} · {asset.category?.name}</p>
