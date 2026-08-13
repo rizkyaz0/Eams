@@ -1,4 +1,13 @@
-import { Package, PackageCheck, Wrench, AlertTriangle, Trash2 } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeftRight,
+  ClipboardList,
+  Package,
+  PackageCheck,
+  PackageX,
+  TrendingUp,
+  Wrench,
+} from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface DashboardStatsProps {
@@ -7,6 +16,7 @@ interface DashboardStatsProps {
     available: number;
     inUse: number;
     inMaintenance: number;
+    borrowed: number;
     missing: number;
     disposed: number;
     valueStats: {
@@ -14,7 +24,28 @@ interface DashboardStatsProps {
       averageValue: number;
     };
     recentAdditions: number;
+    openDamageReports: number;
+    activeLoanBatches: number;
   };
+}
+
+/**
+ * Format a number as a compact Rupiah value: "Rp 1,2M" for millions,
+ * "Rp 1,5B" for billions, falling back to full formatting below that.
+ * Coerces via Number() because Prisma Decimal values arrive as strings.
+ */
+function formatCompactRupiah(value: number): string {
+  const num = Number(value);
+  if (num >= 1_000_000_000) {
+    return `Rp ${(num / 1_000_000_000).toLocaleString("id-ID", { maximumFractionDigits: 1 })}M`;
+  }
+  if (num >= 1_000_000) {
+    return `Rp ${(num / 1_000_000).toLocaleString("id-ID", { maximumFractionDigits: 1 })}Jt`;
+  }
+  if (num >= 1_000) {
+    return `Rp ${(num / 1_000).toLocaleString("id-ID", { maximumFractionDigits: 1 })}Rb`;
+  }
+  return `Rp ${num.toLocaleString("id-ID")}`;
 }
 
 export function DashboardStats({ data }: DashboardStatsProps) {
@@ -53,9 +84,41 @@ export function DashboardStats({ data }: DashboardStatsProps) {
       color: "text-orange-600",
       bgColor: "bg-orange-50 dark:bg-orange-950",
     },
+    {
+      label: "Dipinjam",
+      value: data.borrowed.toLocaleString(),
+      description: "Sedang dipinjam",
+      icon: ArrowLeftRight,
+      color: "text-indigo-600",
+      bgColor: "bg-indigo-50 dark:bg-indigo-950",
+    },
+    {
+      label: "Laporan Rusak",
+      value: data.openDamageReports.toLocaleString(),
+      description: "Perlu ditangani",
+      icon: PackageX,
+      color: "text-rose-600",
+      bgColor: "bg-rose-50 dark:bg-rose-950",
+    },
+    {
+      label: "Peminjaman Aktif",
+      value: data.activeLoanBatches.toLocaleString(),
+      description: "Sedang berjalan",
+      icon: ClipboardList,
+      color: "text-violet-600",
+      bgColor: "bg-violet-50 dark:bg-violet-950",
+    },
+    {
+      label: "Nilai Total Aset",
+      value: formatCompactRupiah(data.valueStats.totalValue),
+      description: `Rata-rata ${formatCompactRupiah(data.valueStats.averageValue)}`,
+      icon: TrendingUp,
+      color: "text-emerald-600",
+      bgColor: "bg-emerald-50 dark:bg-emerald-950",
+    },
   ];
 
-  // Add missing and disposed if they exist
+  // Add missing if it exists
   if (data.missing > 0) {
     stats.push({
       label: "Hilang",
@@ -68,7 +131,7 @@ export function DashboardStats({ data }: DashboardStatsProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 md:grid-cols-2 xl:grid-cols-4">
       {stats.map((stat) => {
         const Icon = stat.icon;
         return (

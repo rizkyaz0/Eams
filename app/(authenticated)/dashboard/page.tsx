@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { DashboardStats } from "@/components/dashboard-stats";
 import { DashboardCharts } from "@/components/dashboard-charts";
+import { DashboardAlerts } from "@/components/dashboard-alerts";
 import { RecentBast } from "@/components/recent-bast";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -34,17 +35,37 @@ export default function DashboardPage() {
       <div className="@container/main flex flex-1 flex-col gap-2">
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
           {loading ? (
-            <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
-              {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-40" />
-              ))}
+            <div className="flex flex-col gap-4 md:gap-6">
+              <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 md:grid-cols-2 xl:grid-cols-4">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                  <Skeleton key={i} className="h-40" />
+                ))}
+              </div>
+              <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 lg:grid-cols-2">
+                {[1, 2].map((i) => (
+                  <Skeleton key={i} className="h-[380px]" />
+                ))}
+              </div>
+              <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 lg:grid-cols-2">
+                {[1, 2].map((i) => (
+                  <Skeleton key={i} className="h-[360px]" />
+                ))}
+              </div>
+              <Skeleton className="mx-4 lg:mx-6 h-[320px]" />
             </div>
           ) : (
             <>
               <DashboardStats data={dashboardData?.assetStatistics} />
               <div className="px-4 lg:px-6">
-                <DashboardCharts data={dashboardData?.assetsByCategory} />
+                <DashboardCharts
+                  data={dashboardData?.assetsByCategory}
+                  monthlyData={dashboardData?.monthlyAcquisitions}
+                />
               </div>
+              <DashboardAlerts
+                warrantyData={dashboardData?.warrantyExpiringSoon}
+                activityData={dashboardData?.recentActivities}
+              />
               <RecentBast data={dashboardData?.recentBasts} />
             </>
           )}
