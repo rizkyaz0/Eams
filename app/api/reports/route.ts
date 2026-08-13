@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
       loanStats,
       damageStats,
       warrantyExpiring,
+      stockGroupsRaw,
     ] = await Promise.all([
       // Status distribution
       prisma.asset.groupBy({ by: ["status"], _count: { id: true } }),
@@ -98,10 +99,21 @@ export async function GET(request: NextRequest) {
         orderBy: { warrantyExpiry: "asc" },
         take: 20,
       }),
+
+      // Stock per category + status (for ringkasan stok table)
+      prisma.asset.groupBy({
+        by: ["categoryId", "status"],
+        _count: { id: true },
+      }),
     ]);
 
-    // Category names lookup
-    const categoryIds = categoryGroupsRaw.map((g) => g.categoryId);
+    // Category names lookup (union of top-5 and stock groups)
+    const categoryIds = [
+      ...new Set([
+        ...categoryGroupsRaw.map((g) => g.categoryId),
+        ...stockGroupsRaw.map((g) => g.categoryId).filter(Boolean),
+      ] as string[]),
+    ];
     const categories = await prisma.category.findMany({
       where: { id: { in: categoryIds } },
       select: { id: true, name: true },
@@ -136,6 +148,25 @@ export async function GET(request: NextRequest) {
       value: g._count.id,
     }));
 
+    // Build stock-per-category pivot
+    const stockByCategoryMap = new Map<string, { name: string; total: number; available: number; inUse: number; borrowed: number; inMaintenance: number; other: number }>();
+    for (const row of stockGroupsRaw) {
+      if (!row.categoryId) continue;
+      const catName = categories.find((c) => c.id === row.categoryId)?.name ?? "Lainnya";
+      if (!stockByCategoryMap.has(row.categoryId)) {
+        stockByCategoryMap.set(row.categoryId, { name: catName, total: 0, available: 0, inUse: 0, borrowed: 0, inMaintenance: 0, other: 0 });
+      }
+      const entry = stockByCategoryMap.get(row.categoryId)!;
+      const count = row._count.id;
+      entry.total += count;
+      if (row.status === "AVAILABLE") entry.available += count;
+      else if (row.status === "IN_USE") entry.inUse += count;
+      else if (row.status === "BORROWED") entry.borrowed += count;
+      else if (row.status === "IN_MAINTENANCE") entry.inMaintenance += count;
+      else entry.other += count;
+    }
+    const stockByCategory = Array.from(stockByCategoryMap.values()).sort((a, b) => b.total - a.total);
+
     const [maintenanceActive, maintenancePending, maintenanceCostAgg] = maintenanceStats;
     const [loanActiveBatches, loanActiveItems, loanOverdueItems] = loanStats;
     const [damageOpen, damageInProgress, damageResolved] = damageStats;
@@ -162,6 +193,7 @@ export async function GET(request: NextRequest) {
         resolved: damageResolved,
       },
       warrantyExpiring,
+      stockByCategory,
     });
   } catch (error: any) {
     console.error("Failed to generate report data", error);

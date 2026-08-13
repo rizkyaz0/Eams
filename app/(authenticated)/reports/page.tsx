@@ -186,6 +186,42 @@ export default function ReportsPage() {
         </div>
       </Section>
 
+      {/* Stock by Category */}
+      {data.stockByCategory?.length > 0 && (
+        <Section title="Ringkasan Stok per Kategori">
+          <Card>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Kategori</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead className="text-right">Tersedia</TableHead>
+                    <TableHead className="text-right">Digunakan</TableHead>
+                    <TableHead className="text-right">Dipinjam</TableHead>
+                    <TableHead className="text-right">Pemeliharaan</TableHead>
+                    <TableHead className="text-right">Lainnya</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.stockByCategory.map((row: any) => (
+                    <TableRow key={row.name}>
+                      <TableCell className="font-medium">{row.name}</TableCell>
+                      <TableCell className="text-right font-semibold">{row.total}</TableCell>
+                      <TableCell className="text-right text-green-600">{row.available || <span className="text-muted-foreground">-</span>}</TableCell>
+                      <TableCell className="text-right text-blue-600">{row.inUse || <span className="text-muted-foreground">-</span>}</TableCell>
+                      <TableCell className="text-right text-purple-600">{row.borrowed || <span className="text-muted-foreground">-</span>}</TableCell>
+                      <TableCell className="text-right text-amber-600">{row.inMaintenance || <span className="text-muted-foreground">-</span>}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">{row.other || "-"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
+        </Section>
+      )}
+
       {/* Maintenance */}
       <Section title="Pemeliharaan">
         <div className="grid gap-4 sm:grid-cols-3">
